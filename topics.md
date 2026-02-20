@@ -1,0 +1,9 @@
+- Type system: primitives, array, objects, unions
+- Interfaces vs types
+- Generics
+- Type inference and annotations
+- Type unions and intersections
+- Function types, return types
+- Utility types (Partial, Pick, Required, Omit, Record)
+- Type-safe API responses
+- Type guards
