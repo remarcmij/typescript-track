@@ -176,6 +176,8 @@ const message = greet('Aisha', 27);
 
 Every `: string` and `: number` annotation is gone. The logic is identical — the types were only there to help you write correct code.
 
+You can see this in action in the [TypeScript Playground](https://www.typescriptlang.org/play) — paste any TypeScript on the left and the compiled JavaScript appears on the right.
+
 How each tool handles this removal differs: `tsc` parses and type-checks first, then emits JavaScript. `tsx` uses `esbuild` to strip types at high speed without checking them. Node.js native support replaces type annotations with whitespace in-place[^1], so line numbers stay the same without needing source maps.
 
 [^1]: This is why `node example.ts` works even though Node.js only runs JavaScript — by the time the code reaches the JavaScript engine, the types are already gone.
