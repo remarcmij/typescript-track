@@ -526,7 +526,7 @@ type SoftDeletable = { deletedAt: Date | null };
 type DatabaseRecord = Timestamped & SoftDeletable;
 ```
 
-A `DatabaseRecord` has all four properties: `createdAt`, `updatedAt`, and `deletedAt`. You defined each concern separately and combined them with `&`.
+A `DatabaseRecord` has all three properties: `createdAt`, `updatedAt`, and `deletedAt`. You defined each concern separately and combined them with `&`.
 
 ### Unions vs Intersections
 
@@ -833,7 +833,7 @@ Save this as `utility-types.ts` and run it with `node utility-types.ts`. Experim
 
 ## Type-Safe API Responses
 
-When your React app fetches data from an API, the response comes back as unknown data. TypeScript can't know at compile time what the server will return — you need to tell it.
+When your app fetches data from an API, the response comes back as unknown data. TypeScript can't know at compile time what the server will return — you need to tell it.
 
 ### The Problem
 
