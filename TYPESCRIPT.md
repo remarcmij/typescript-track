@@ -42,7 +42,16 @@ let age = 27;
 let isStudent = true;
 ```
 
-TypeScript lets you **annotate** your variables with type information. An annotation is the `: type` you add after a variable name — a colon followed by the type. It tells TypeScript (and anyone reading the code) what type of value the variable holds:
+JavaScript also doesn't stop you from changing a variable's type during its lifetime. You can start with a number and reassign it to a string — no error, no warning:
+
+```js
+let age = 27;
+age = 'twenty-seven'; // JavaScript allows this — no complaint
+```
+
+This flexibility is a common source of bugs. Code that expects `age` to be a number might break when it's suddenly a string — and you won't find out until the code runs.
+
+TypeScript solves this with **type annotations**. An annotation is the `: type` you add after a variable name — a colon followed by the type. It locks the variable to that type for its entire lifetime:
 
 ```ts
 let name: string = 'Aisha';
@@ -343,17 +352,6 @@ getLength(42); // Error: number doesn't have length
 
 The constraint `T extends { length: number }` means "T can be any type, as long as it has a `length` property that is a `number`." Strings and arrays both qualify. Plain numbers don't, so TypeScript rejects the last call.
 
-### Generics in React (Preview)
-
-When you start writing React with TypeScript, you'll see generics constantly. The `useState` hook is generic:
-
-```ts
-const [count, setCount] = useState<number>(0);
-const [user, setUser] = useState<User | null>(null);
-```
-
-The `<number>` after `useState` tells TypeScript that `count` is a `number` and `setCount` only accepts numbers. Often TypeScript infers this from the initial value (e.g., `0` is clearly a `number`), so you only need the explicit generic when the initial value doesn't tell the full story — like `null` above, where TypeScript can't know that `user` will eventually be a `User`.
-
 <details>
 <summary><strong>Try it yourself</strong></summary>
 
@@ -649,19 +647,6 @@ function throwError(msg: string): never {
 ```
 
 `logMessage` runs and finishes, but its return value isn't useful. `throwError` never finishes — it always throws, so no code after it will ever run.
-
-### Typing Callbacks in React (Preview)
-
-Event handlers in React follow the same rules. Here's an interface with two callback properties:
-
-```ts
-interface FormProps {
-  onSubmit: (data: FormData) => void;
-  onChange: (field: string, value: string) => void;
-}
-```
-
-`onSubmit` is a function that receives a `FormData` object and returns nothing. `onChange` is a function that receives two strings (the field name and its new value) and returns nothing. These type annotations ensure that any component using `FormProps` passes the right kind of functions.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
@@ -1061,7 +1046,7 @@ function reduce(state: string[], action: Action): string[] {
 
 The `type` field is the discriminant — each variant has a different literal value (`'add'`, `'remove'`, `'clear'`). In the `case 'add'` branch, TypeScript knows `action` is the `{ type: 'add'; item: string }` variant, so `action.item` is available. In the `case 'remove'` branch, `action.index` is available.
 
-This pattern maps directly to how you'll write reducers in React. If you later add a new action type and forget to handle it, TypeScript can catch that with an **exhaustiveness check**:
+If you later add a new action type and forget to handle it, TypeScript can catch that with an **exhaustiveness check**:
 
 ```ts
 function assertNever(value: never): never {
