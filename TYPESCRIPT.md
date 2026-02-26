@@ -4,7 +4,7 @@ You already know JavaScript. TypeScript is JavaScript with a type system layered
 
 TypeScript catches bugs at compile time that JavaScript would only reveal at runtime. Your editor gives you autocomplete, instant error feedback, and safer refactoring — all powered by the type information you add to your code.
 
-### Quick Start: Running TypeScript with Node.js
+## Quick Start: Running TypeScript with Node.js
 
 Node.js can run `.ts` files directly — no install, no setup, no build step. Node.js strips the type annotations and executes the remaining JavaScript:
 
@@ -245,14 +245,14 @@ Here `ID` is a shorthand for `string | number`, `Status` restricts values to exa
 Use `interface` when you're defining the shape of an object. Use `type` when you need unions, intersections, tuples, or other computed types:
 
 ```ts
-interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
+interface SearchOptions {
+  query: string;
+  onComplete: () => void;
+  caseSensitive?: boolean;
 }
 ```
 
-The `?` after `disabled` makes it optional — a `ButtonProps` object may or may not include it. The `() => void` annotation means `onClick` is a function that takes no arguments and doesn't return a value.
+The `?` after `caseSensitive` makes it optional — a `SearchOptions` object may or may not include it. The `() => void` annotation means `onComplete` is a function that takes no arguments and doesn't return a value.
 
 Don't overthink the choice between `interface` and `type` — the difference rarely matters in practice.
 
@@ -490,16 +490,16 @@ function showMessage(status: Status) {
 
 `Status` is a union of three string literals. The `status` parameter only accepts one of those three exact strings — passing `'pending'` or any other string would be an error. The `switch` statement handles each possibility.
 
-String literal unions like this are called **discriminated unions** when used with objects — a pattern you'll see often for modelling states that carry different data:
+String literal unions become even more powerful when used with objects. A **discriminated union** is a union of object types where each variant has a common field with a different literal value:
 
 ```ts
 type RequestState =
   | { status: 'loading' }
-  | { status: 'success'; data: User[] }
+  | { status: 'success'; data: string[] }
   | { status: 'error'; message: string };
 ```
 
-This defines three possible shapes. Each variant has a `status` field with a different literal value, which TypeScript can use to figure out which variant you're dealing with. When `status` is `'success'`, TypeScript knows a `data` property exists. When `status` is `'error'`, it knows `message` exists.
+This defines three possible shapes. The `status` field is the **discriminant** — its literal value tells TypeScript which variant you're dealing with. When `status` is `'success'`, TypeScript knows a `data` property exists. When `status` is `'error'`, it knows `message` exists. You'll see this pattern often for modelling states that carry different data.
 
 ### Intersections: "All of These"
 
@@ -731,11 +731,11 @@ type UserSummary = Pick<User, 'name' | 'email'>;
 The opposite of `Pick` — creates a type with all properties _except_ the specified ones:
 
 ```ts
-type CreateUserInput = Omit<User, 'id' | 'createdAt'>;
-// Everything from User except id and createdAt
+type PublicUser = Omit<User, 'email'>;
+// { name: string; age: number }
 ```
 
-This is useful when some fields are generated automatically (like `id`) and shouldn't be provided by the caller.
+`Omit<User, 'email'>` keeps `name` and `age` but removes `email`. This is useful when certain fields shouldn't be exposed or provided by the caller.
 
 ### Record\<Keys, Value\>
 
@@ -756,6 +756,7 @@ const roles: UserRoles = {
 `Record` is also useful for lookup maps where the keys come from a union:
 
 ```ts
+type Status = 'loading' | 'success' | 'error';
 type StatusLabels = Record<Status, string>;
 
 const labels: StatusLabels = {
