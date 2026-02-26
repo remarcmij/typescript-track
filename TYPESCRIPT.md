@@ -2,11 +2,23 @@
 
 You already know JavaScript. TypeScript is JavaScript with a type system layered on top. Every valid JavaScript program is already valid TypeScript — you're adding types, not learning a new language.
 
-TypeScript catches bugs at compile time that JavaScript would only reveal at runtime. When you eventually use TypeScript with React, you'll get autocomplete for props, catch missing or wrong props before the browser even loads, and make refactoring far less scary.
+TypeScript catches bugs at compile time that JavaScript would only reveal at runtime. Your editor gives you autocomplete, instant error feedback, and safer refactoring — all powered by the type information you add to your code.
 
-> **First time?** See [TOOLING.md](TOOLING.md) for how to install and run TypeScript — using Node.js directly, `tsx`, or the full `tsc` compiler.
+### Quick Start: Running TypeScript with Node.js
 
-> **Running the exercises:** Each section below ends with a hands-on exercise. Save the code to a `.ts` file and run it directly with `node filename.ts` (Node.js v22.6+ required; v22.18+ or v23.6+ recommended). No compilation step needed — Node.js strips the types and runs the JavaScript. See [TOOLING.md](TOOLING.md) for details.
+Node.js can run `.ts` files directly — no install, no setup, no build step. Node.js strips the type annotations and executes the remaining JavaScript:
+
+```bash
+node example.ts
+```
+
+> [!IMPORTANT]
+> Check your version with `node -v`. You need **Node.js v22.18+** or **v23.6+** for this to work. If you're on an older version, upgrade to the current LTS version (presently v24) from [nodejs.org](https://nodejs.org/).
+
+That's all you need to run every exercise in this document.
+
+> [!TIP]
+> See [TOOLING.md](TOOLING.md) for setting up a proper TypeScript project with transpilation (`tsc`), fast dev running (`tsx`), and linting (ESLint).
 
 ---
 
@@ -78,6 +90,16 @@ function findUser(id: number): User | undefined {
 
 When you use a union value, TypeScript forces you to handle each possibility before using type-specific operations. This is called **narrowing** and is covered later under type guards.
 
+### Your Editor Is Part of the Experience
+
+For this first exercise, try typing the code into a `.ts` file in VS Code rather than copying it. VS Code has built-in TypeScript support and gives you real-time feedback without running anything:
+
+- **Hover** over any variable, function, or expression to see its type in a tooltip.
+- **Autocomplete** suggests properties and methods based on the type, so you don't have to memorize APIs.
+- **Error squiggles** appear under code with type errors, with an explanation when you hover over them.
+
+This instant feedback loop is one of the biggest practical benefits of TypeScript. You'll see types, catch mistakes, and discover available methods — all without leaving your editor.
+
 <details>
 <summary><strong>Try it yourself</strong></summary>
 
@@ -113,18 +135,6 @@ console.log(describe(42));
 Try changing `population` to a string like `"nine hundred thousand"` — TypeScript will catch the type mismatch before the code runs.
 
 </details>
-
----
-
-## Your Editor Is Part of the Experience
-
-Now that you've seen some TypeScript syntax, try it in VS Code. VS Code has built-in TypeScript support and gives you real-time feedback without running anything:
-
-- **Hover** over any variable, function, or expression to see its type in a tooltip.
-- **Autocomplete** suggests properties and methods based on the type, so you don't have to memorize APIs.
-- **Error squiggles** appear under code with type errors, with an explanation when you hover over them.
-
-This instant feedback loop is one of the biggest practical benefits of TypeScript. You'll see types, catch mistakes, and discover available methods — all without leaving your editor.
 
 ---
 

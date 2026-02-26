@@ -1,65 +1,19 @@
 # TypeScript Tooling
 
-Before writing TypeScript, you need a way to run it. Browsers and Node.js run JavaScript, not TypeScript, so the type annotations must be removed before execution. There are three ways to do this, from simplest to most configurable.
+Running `node example.ts` is fine for learning and quick experiments (see [TYPESCRIPT.md](TYPESCRIPT.md) for details). But for real projects you need proper tooling: a compiler that type-checks and transpiles your code, and a linter that catches style and correctness issues.
 
-## Option 1: Run TypeScript Directly in Node.js (v22.6+)
+This document covers setting up a TypeScript project with the TypeScript compiler (`tsc`), using `tsx` for fast development, and optionally adding ESLint.
 
-Recent versions of Node.js can run `.ts` files directly. Node.js strips the type annotations (replaces them with whitespace) and executes the remaining JavaScript. No extra packages needed.
+---
 
-**Node.js v23.6+ and v22.18+** — works out of the box:
+## The TypeScript Compiler (tsc)
 
-```bash
-node example.ts
-```
-
-**Node.js v22.6 to v22.17** — requires a flag:
-
-```bash
-node --experimental-strip-types example.ts
-```
-
-This is called **type stripping**. It is fast and zero-config, but comes with limitations:
-
-- **No type checking** — types are stripped, not validated. You still need `tsc` to catch type errors (see Option 3).
-- **Only erasable syntax** — features like `enum` and `namespace` with runtime code are not supported by default. Use `--experimental-transform-types` if you need them.
-- **File extensions required in imports** — you must write `import './utils.ts'`, not `import './utils'`.
-- **`.tsx` files are not supported** — this matters later when you work with React.
-- **`tsconfig.json` is ignored** — Node.js does not read your TypeScript config.
-
-Despite these limitations, this is the quickest way to start experimenting with TypeScript.
-
-## Option 2: Use tsx (TypeScript Execute)
-
-`tsx` is a drop-in replacement for `node` that runs TypeScript files using `esbuild` under the hood. It's faster than the traditional TypeScript compiler and supports both CommonJS and ES modules with zero configuration.
-
-Install it:
-
-```bash
-npm install --save-dev tsx
-```
-
-Run a file:
-
-```bash
-npx tsx example.ts
-```
-
-Or use it as a drop-in for `node` (it accepts all the same flags):
-
-```bash
-npx tsx --watch example.ts
-```
-
-`tsx` is a good choice for development — running scripts, prototyping, and local dev servers. For production builds, you'll typically still use the full TypeScript compiler (Option 3) to type-check and emit JavaScript.
-
-## Option 3: The TypeScript Compiler (tsc)
-
-This is the standard, full-featured approach. The TypeScript compiler (`tsc`) does two independent things:
+The TypeScript compiler does two independent things:
 
 1. **Type checking** — analyses your code and reports type errors.
-2. **Type removal** — strips the type annotations and emits plain JavaScript.
+2. **Transpilation** — strips the type annotations and emits plain JavaScript.
 
-These two steps are independent. A file with type errors still produces runnable JavaScript — `tsc` reports the errors but emits the output anyway by default. This surprises many newcomers: type errors are warnings about correctness, not syntax errors that prevent execution. You can disable this with the `noEmitOnError` option in `tsconfig.json` if you want `tsc` to refuse to emit JavaScript when there are type errors.
+These steps are independent. A file with type errors still produces runnable JavaScript — `tsc` reports the errors but emits the output anyway by default. This surprises many newcomers: type errors are warnings about correctness, not syntax errors that prevent execution. You can change this with the `noEmitOnError` option in `tsconfig.json`.
 
 ### Installation
 
@@ -74,13 +28,14 @@ npm install --save-dev typescript
 npx tsc --init
 ```
 
-This creates a `tsconfig.json` file with many options (most commented out). Here's a minimal starting point for a Node.js project:
+This creates a `tsconfig.json` file with many options (most commented out). Here's a minimal starting point:
 
 ```json
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -93,17 +48,21 @@ This creates a `tsconfig.json` file with many options (most commented out). Here
 }
 ```
 
+Make sure your `package.json` includes `"type": "module"` so Node.js uses ES modules.
+
 What these options mean:
 
-| Option            | What it does                                                                        |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| `target`          | Which JavaScript version to output. `es2020` is a safe modern default.              |
-| `module`          | Module system for the output. `commonjs` for Node.js, `esnext` for modern bundlers. |
-| `outDir`          | Where compiled `.js` files go. Keeps source and output separate.                    |
-| `rootDir`         | Where your `.ts` source files live.                                                 |
-| `strict`          | Enables all strict type-checking options. Always use this.                          |
-| `esModuleInterop` | Lets you `import express from 'express'` instead of `import * as express`.          |
-| `skipLibCheck`    | Skips type-checking `.d.ts` files from `node_modules`. Speeds up compilation.       |
+| Option                        | What it does                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| `target`                      | Which JavaScript version to output. `es2022` is a safe modern default.         |
+| `module`                      | Module system for the output. `nodenext` for Node.js ES module projects.       |
+| `moduleResolution`            | How TypeScript finds imported modules. Must match `module`.                    |
+| `outDir`                      | Where compiled `.js` files go. Keeps source and output separate.               |
+| `rootDir`                     | Where your `.ts` source files live.                                            |
+| `strict`                      | Enables all strict type-checking options. Always use this.                     |
+| `esModuleInterop`             | Lets you `import express from 'express'` instead of `import * as express`.     |
+| `skipLibCheck`                | Skips type-checking `.d.ts` files from `node_modules`. Speeds up compilation.  |
+| `forceConsistentCasingInFileNames` | Prevents issues on case-insensitive file systems.                         |
 
 ### Project Structure
 
@@ -129,6 +88,7 @@ npx tsc --watch            # recompile automatically on file changes
 
 ```json
 {
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -137,11 +97,37 @@ npx tsc --watch            # recompile automatically on file changes
 }
 ```
 
-## Which Option Should You Use?
+---
 
-| Scenario                     | Recommended                                           |
+## Using tsx for Fast Development
+
+`tsx` is a drop-in replacement for `node` that runs TypeScript files using `esbuild` under the hood. It's much faster than `tsc` for running code because it strips types without type-checking. It supports both CommonJS and ES modules with zero configuration.
+
+Install it:
+
+```bash
+npm install --save-dev tsx
+```
+
+Run a file:
+
+```bash
+npx tsx example.ts
+```
+
+Watch mode (re-runs on file changes):
+
+```bash
+npx tsx --watch example.ts
+```
+
+`tsx` is great for development — running scripts, prototyping, and local dev servers. For production builds and CI, you'll still want `tsc` to type-check your code.
+
+### When to Use What
+
+| Scenario                     | Tool                                                  |
 | ---------------------------- | ----------------------------------------------------- |
-| Quick experiments, learning  | Node.js native (`node file.ts`)                       |
+| Quick experiments, learning  | `node file.ts` (Node.js v22.18+ or v23.6+)            |
 | Running scripts, dev servers | `tsx`                                                 |
 | Production projects, CI/CD   | `tsc` for type-checking + build                       |
 | React apps                   | A framework like Vite or Next.js handles this for you |
@@ -152,7 +138,7 @@ In practice, many projects combine these: `tsx` for fast development, `tsc` for 
 
 ## What Does "Removing Types" Mean?
 
-All three options above do the same fundamental thing: they remove type annotations so that a JavaScript engine can execute the code. The annotations are only used during development — they help your editor and the compiler catch mistakes, but they are not part of the JavaScript language.
+All the tools above do the same fundamental thing: they remove type annotations so that a JavaScript engine can execute the code. The annotations are only used during development — they help your editor and the compiler catch mistakes, but they are not part of the JavaScript language.
 
 Here's a TypeScript function:
 
@@ -181,3 +167,87 @@ You can see this in action in the [TypeScript Playground](https://www.typescript
 How each tool handles this removal differs: `tsc` parses and type-checks first, then emits JavaScript. `tsx` uses `esbuild` to strip types at high speed without checking them. Node.js native support replaces type annotations with whitespace in-place[^1], so line numbers stay the same without needing source maps.
 
 [^1]: This is why `node example.ts` works even though Node.js only runs JavaScript — by the time the code reaches the JavaScript engine, the types are already gone.
+
+---
+
+## Optional: ESLint for TypeScript
+
+ESLint catches bugs, enforces consistency, and flags patterns that TypeScript's type checker doesn't cover — things like unused variables, unreachable code, or inconsistent naming.
+
+### Installation
+
+Install ESLint and the TypeScript ESLint plugin:
+
+```bash
+npm install --save-dev eslint @eslint/js typescript-eslint
+```
+
+### Configuration
+
+Create an `eslint.config.js` file in your project root (ESLint v9+ uses flat config):
+
+```js
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    ignores: ['dist/'],
+  },
+);
+```
+
+This gives you a solid set of rules out of the box, including TypeScript-specific rules like catching unused variables, preferring `const`, and flagging unsafe `any` usage.
+
+### Stricter Type-Checked Rules
+
+For projects that want deeper analysis, `typescript-eslint` can use your TypeScript compiler's type information to catch more issues:
+
+```js
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.strictTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    ignores: ['dist/'],
+  },
+);
+```
+
+Type-checked rules can catch things like floating (unhandled) promises, unsafe type assertions, and incorrect use of conditional expressions.
+
+### Running ESLint
+
+Add a script to `package.json`:
+
+```json
+{
+  "scripts": {
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  }
+}
+```
+
+Run it:
+
+```bash
+npm run lint           # report issues
+npm run lint:fix       # auto-fix what can be fixed
+```
+
+### VS Code Integration
+
+Install the [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) for real-time linting in your editor. Errors and warnings appear as squiggles, just like TypeScript's own type errors.
