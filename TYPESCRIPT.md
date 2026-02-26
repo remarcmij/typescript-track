@@ -24,17 +24,33 @@ That's all you need to run every exercise in this document.
 
 ## Type System: Primitives, Arrays, Objects, and Unions
 
-In JavaScript, values have types at runtime. TypeScript lets you declare those types explicitly so the compiler can check them for you.
-
 ### Primitives
 
-The basic types mirror what you already know from JavaScript:
+JavaScript has several primitive types. You use them every day, even if you don't think about them explicitly:
+
+- `string` — text values like `'Aisha'` or `"hello"`
+- `number` — integers and decimals: `27`, `3.14`, `-1`
+- `boolean` — `true` or `false`
+- `null` — intentionally empty
+- `undefined` — not yet assigned
+
+In JavaScript, values have these types at runtime, but you never write them down. This is perfectly valid JavaScript:
+
+```js
+let name = 'Aisha';
+let age = 27;
+let isStudent = true;
+```
+
+TypeScript lets you **annotate** your variables with type information. An annotation is the `: type` you add after a variable name — a colon followed by the type. It tells TypeScript (and anyone reading the code) what type of value the variable holds:
 
 ```ts
 let name: string = 'Aisha';
 let age: number = 27;
 let isStudent: boolean = true;
 ```
+
+The `: string`, `: number`, and `: boolean` parts are the annotations. They are not JavaScript — they exist purely for TypeScript's type checker and your editor. When the code runs, they are stripped away and you're left with the plain JavaScript you started with.
 
 If you try to assign the wrong type, TypeScript stops you before the code runs:
 
@@ -45,7 +61,7 @@ age = 'twenty-seven'; // Error: Type 'string' is not assignable to type 'number'
 
 ### Arrays
 
-Arrays are typed by what they contain:
+Arrays are typed by what they contain. The annotation `number[]` means "an array of numbers" — every element must be a `number`. Likewise, `string[]` means every element must be a `string`:
 
 ```ts
 let scores: number[] = [85, 92, 78];
@@ -60,7 +76,7 @@ let scores: Array<number> = [85, 92, 78];
 
 ### Objects
 
-You can describe the shape of an object inline:
+You can describe the shape of an object inline. The annotation after the colon lists each property and its type, separated by semicolons:
 
 ```ts
 let student: { name: string; age: number } = {
@@ -69,24 +85,30 @@ let student: { name: string; age: number } = {
 };
 ```
 
-This gets verbose quickly — you'll soon want interfaces or type aliases (covered in the next section) to name these shapes and reuse them.
+Here, `{ name: string; age: number }` is the type annotation. It says this object must have a `name` property that is a `string` and an `age` property that is a `number`. If you misspell a property or use the wrong type, TypeScript will flag it.
+
+This inline style gets verbose quickly — you'll soon want interfaces or type aliases (covered in the next section) to name these shapes and reuse them.
 
 ### Unions
 
-A union type says "this value can be one of several types." You write it with the `|` operator:
+A union type says "this value can be one of several types." You write it with the `|` (pipe) operator between the types:
 
 ```ts
 let id: string | number = 'abc-123';
 id = 42; // also fine
 ```
 
-Unions are everywhere in real code. A function might return a value or `null`. An API field might be a string or a number. Unions let you model this honestly.
+The annotation `: string | number` means `id` can hold either a `string` or a `number` — both assignments above are valid.
+
+Unions are everywhere in real code. A function might return a value or `null`. An API field might be a string or a number. Unions let you model this honestly:
 
 ```ts
 function findUser(id: number): User | undefined {
   return users.find((user) => user.id === id);
 }
 ```
+
+Here the return type `User | undefined` tells callers that this function might not find a user — they'll need to handle the `undefined` case before using the result.
 
 When you use a union value, TypeScript forces you to handle each possibility before using type-specific operations. This is called **narrowing** and is covered later under type guards.
 
@@ -144,6 +166,8 @@ Both `interface` and `type` let you name an object shape. They overlap significa
 
 ### Interface
 
+An `interface` declares a named shape — a list of properties and their types. You can then use the interface name as a type annotation instead of repeating the full object shape every time:
+
 ```ts
 interface Student {
   name: string;
@@ -157,6 +181,8 @@ const student: Student = {
   email: 'aisha@example.com',
 };
 ```
+
+The annotation `: Student` tells TypeScript this object must have exactly the properties listed in the `Student` interface, with the correct types. If you add an extra property, misspell one, or use the wrong type, TypeScript will flag it.
 
 Interfaces can be **extended**, which is useful when you want to build on an existing shape:
 
@@ -172,6 +198,8 @@ interface Student extends Person {
 }
 ```
 
+`Student extends Person` means a `Student` has everything a `Person` has (`name` and `age`), plus `email` and `cohort`. You don't need to repeat the shared properties.
+
 Interfaces can also be **declared multiple times** and TypeScript merges them automatically. This is called declaration merging and is mainly useful for library authors:
 
 ```ts
@@ -183,6 +211,8 @@ interface Window {
 
 ### Type Alias
 
+A `type` alias works similarly — it gives a name to a type so you can reuse it:
+
 ```ts
 type Student = {
   name: string;
@@ -191,17 +221,19 @@ type Student = {
 };
 ```
 
-Type aliases can do everything interfaces can for object shapes, but they can also name unions, intersections, and other types that interfaces cannot:
+For object shapes like this, `type` and `interface` behave the same way. But type aliases can also name things that interfaces cannot — unions, intersections, tuples, and other computed types:
 
 ```ts
-type ID = string | number;
-type Status = 'active' | 'inactive' | 'suspended';
-type Coordinate = [number, number];
+type ID = string | number;                          // union
+type Status = 'active' | 'inactive' | 'suspended';  // string literal union
+type Coordinate = [number, number];                  // tuple (fixed-length array)
 ```
+
+Here `ID` is a shorthand for `string | number`, `Status` restricts values to exactly three strings, and `Coordinate` is a pair of numbers.
 
 ### Which Should You Use?
 
-Use `interface` when you're defining the shape of an object, especially in a React codebase where component props are almost always written as interfaces:
+Use `interface` when you're defining the shape of an object. Use `type` when you need unions, intersections, tuples, or other computed types:
 
 ```ts
 interface ButtonProps {
@@ -211,7 +243,9 @@ interface ButtonProps {
 }
 ```
 
-Use `type` when you need unions, intersections, tuples, or other computed types. Don't overthink it — the difference rarely matters in practice.
+The `?` after `disabled` makes it optional — a `ButtonProps` object may or may not include it. The `() => void` annotation means `onClick` is a function that takes no arguments and doesn't return a value.
+
+Don't overthink the choice between `interface` and `type` — the difference rarely matters in practice.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
@@ -261,7 +295,7 @@ function firstString(arr: string[]): string {
 }
 ```
 
-These do the same thing. Generics let you write it once:
+These two functions do the same thing — return the first element — but each only works with one type. Generics let you write it once:
 
 ```ts
 function first<T>(arr: T[]): T {
@@ -272,7 +306,9 @@ const n = first([1, 2, 3]); // TypeScript knows n is number
 const s = first(['a', 'b']); // TypeScript knows s is string
 ```
 
-`T` is a type variable. When you call `first([1, 2, 3])`, TypeScript infers that `T` is `number` and ensures the return type matches.
+The `<T>` after the function name declares a **type parameter** called `T`. Think of it as a placeholder: "I don't know the type yet — call it `T` for now." The parameter `arr: T[]` means "an array of whatever `T` turns out to be", and the return type `: T` means "the return value is that same type."
+
+When you call `first([1, 2, 3])`, TypeScript sees that the array contains numbers, fills in `T = number`, and knows the result is a `number`. You don't have to specify `T` yourself — TypeScript infers it from the argument.
 
 ### Generic Interfaces and Types
 
@@ -289,9 +325,11 @@ type UserResponse = ApiResponse<User>;
 type ProductResponse = ApiResponse<Product>;
 ```
 
+`ApiResponse<T>` defines a response shape where the `data` field can hold any type. `ApiResponse<User>` fills in `T = User`, so `data` becomes `User`. `ApiResponse<Product>` fills in `T = Product`, so `data` becomes `Product`. The `status` and `message` fields stay the same in both cases.
+
 ### Constraining Generics
 
-Sometimes you want a generic that accepts any type — as long as it has certain properties. Use `extends` for this:
+Sometimes you want a generic that accepts any type — as long as it has certain properties. Use `extends` to set a constraint:
 
 ```ts
 function getLength<T extends { length: number }>(item: T): number {
@@ -303,6 +341,8 @@ getLength([1, 2, 3]); // works — arrays have length
 getLength(42); // Error: number doesn't have length
 ```
 
+The constraint `T extends { length: number }` means "T can be any type, as long as it has a `length` property that is a `number`." Strings and arrays both qualify. Plain numbers don't, so TypeScript rejects the last call.
+
 ### Generics in React (Preview)
 
 When you start writing React with TypeScript, you'll see generics constantly. The `useState` hook is generic:
@@ -312,7 +352,7 @@ const [count, setCount] = useState<number>(0);
 const [user, setUser] = useState<User | null>(null);
 ```
 
-Often TypeScript infers the type from the initial value, so you only need the explicit generic when the initial value doesn't tell the full story (like `null` above).
+The `<number>` after `useState` tells TypeScript that `count` is a `number` and `setCount` only accepts numbers. Often TypeScript infers this from the initial value (e.g., `0` is clearly a `number`), so you only need the explicit generic when the initial value doesn't tell the full story — like `null` above, where TypeScript can't know that `user` will eventually be a `User`.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
@@ -341,6 +381,8 @@ TypeScript doesn't require you to annotate every single value. It can **infer** 
 
 ### Inference in Action
 
+When you assign a value, TypeScript looks at the right-hand side and figures out the type for you:
+
 ```ts
 let name = 'Aisha'; // TypeScript infers: string
 let age = 27; // TypeScript infers: number
@@ -349,7 +391,9 @@ let scores = [85, 92, 78]; // TypeScript infers: number[]
 const greeting = 'hello'; // TypeScript infers: "hello" (literal type, because const)
 ```
 
-Function return types are also inferred:
+Notice the difference between `let` and `const`: `let name` is inferred as `string` (because it could be reassigned to any string), but `const greeting` is inferred as the literal type `"hello"` (because it can never change).
+
+Function return types are also inferred from the `return` statement:
 
 ```ts
 function add(a: number, b: number) {
@@ -357,28 +401,33 @@ function add(a: number, b: number) {
 }
 ```
 
+You annotated the parameters (`a: number`, `b: number`), but didn't annotate the return type. TypeScript sees that `a + b` produces a `number` and infers the return type automatically.
+
 ### When to Add Annotations
 
 Add explicit type annotations when:
 
-**1. TypeScript can't infer the type** — typically function parameters:
+**1. TypeScript can't infer the type** — typically function parameters, since there's no value to infer from:
 
 ```ts
-// Parameters must be annotated — TypeScript can't guess them
 function greet(name: string): string {
   return `Hello, ${name}`;
 }
 ```
 
+Without the `: string` annotation on `name`, TypeScript has no way to know what type of argument `greet` expects.
+
 **2. The inferred type is too broad or too narrow:**
 
 ```ts
-// Inferred as never[] — TypeScript doesn't know what you'll push
+// Without the annotation, TypeScript infers never[] — an array that can't hold anything
 const items: string[] = [];
 
-// Inferred as null — you need to tell TypeScript what it will become
+// Without the annotation, TypeScript only sees null — it can't know what comes later
 const user: User | null = null;
 ```
+
+In both cases, the annotation tells TypeScript what the variable will eventually hold, not just what it holds right now.
 
 **3. You want to document intent**, especially for function return types in public APIs or complex logic:
 
@@ -441,7 +490,9 @@ function showMessage(status: Status) {
 }
 ```
 
-String literal unions like this are called **discriminated unions** when used with objects — a pattern you'll see often in React for modelling component states:
+`Status` is a union of three string literals. The `status` parameter only accepts one of those three exact strings — passing `'pending'` or any other string would be an error. The `switch` statement handles each possibility.
+
+String literal unions like this are called **discriminated unions** when used with objects — a pattern you'll see often for modelling states that carry different data:
 
 ```ts
 type RequestState =
@@ -450,11 +501,11 @@ type RequestState =
   | { status: 'error'; message: string };
 ```
 
-Each variant has a common `status` field that TypeScript can use to narrow the type.
+This defines three possible shapes. Each variant has a `status` field with a different literal value, which TypeScript can use to figure out which variant you're dealing with. When `status` is `'success'`, TypeScript knows a `data` property exists. When `status` is `'error'`, it knows `message` exists.
 
 ### Intersections: "All of These"
 
-An intersection type (`A & B`) means the value has **all** properties from both types:
+An intersection type (`A & B`) means the value has **all** properties from both types. The `&` operator combines them:
 
 ```ts
 type HasName = { name: string };
@@ -464,7 +515,9 @@ type Contact = HasName & HasEmail;
 // Contact = { name: string; email: string }
 ```
 
-Intersections are useful for composing types from smaller pieces:
+A `Contact` must have both `name` and `email` — it satisfies both `HasName` and `HasEmail` at the same time.
+
+Intersections are useful for composing types from smaller, reusable pieces:
 
 ```ts
 type Timestamped = { createdAt: Date; updatedAt: Date };
@@ -472,6 +525,8 @@ type SoftDeletable = { deletedAt: Date | null };
 
 type DatabaseRecord = Timestamped & SoftDeletable;
 ```
+
+A `DatabaseRecord` has all four properties: `createdAt`, `updatedAt`, and `deletedAt`. You defined each concern separately and combined them with `&`.
 
 ### Unions vs Intersections
 
@@ -523,13 +578,19 @@ Functions in TypeScript can have typed parameters and return values.
 
 ### Typing Parameters and Returns
 
+You annotate function parameters the same way as variables — with `: type` after the name. The return type goes after the parameter list:
+
 ```ts
 function add(a: number, b: number): number {
   return a + b;
 }
 ```
 
+Here `a: number` and `b: number` annotate the two parameters, and `: number` after the closing parenthesis annotates the return type. If the function tried to return a string, TypeScript would flag the mismatch.
+
 ### Optional and Default Parameters
+
+A parameter with a default value (`= 'Hello'`) doesn't need to be passed by the caller — the default is used instead. A parameter marked with `?` is optional and will be `undefined` if not provided:
 
 ```ts
 function greet(name: string, greeting: string = 'Hello'): string {
@@ -542,9 +603,13 @@ function log(message: string, userId?: string): void {
 }
 ```
 
+In `greet`, you can call `greet('Aisha')` and `greeting` defaults to `'Hello'`. In `log`, the `?` after `userId` makes it optional — its type becomes `string | undefined`, so you must check for it before using string operations.
+
+The return type `: void` on `log` means the function doesn't return a meaningful value.
+
 ### Function Type Expressions
 
-You can describe the type of a function itself. This is common when passing callbacks:
+You can describe the type of a function itself — not just its parameters and return, but the whole function as a value. This is common when passing callbacks:
 
 ```ts
 type Formatter = (value: number) => string;
@@ -556,13 +621,19 @@ function applyFormat(value: number, format: Formatter): string {
 applyFormat(1000, (n) => `$${n.toFixed(2)}`);
 ```
 
+`Formatter` describes a function that takes a `number` and returns a `string`. The `=>` here is part of the type syntax (not an arrow function) — it separates the parameters from the return type. The `applyFormat` function accepts any function matching that shape as its second argument.
+
 ### Typing Arrow Functions
+
+Arrow functions use the same annotation syntax — `: type` after each parameter and after the parameter list for the return type:
 
 ```ts
 const multiply = (a: number, b: number): number => a * b;
 ```
 
 ### Void vs Never
+
+Two special return types worth knowing:
 
 - `void` means the function doesn't return a meaningful value (like `console.log`)
 - `never` means the function never returns at all (it throws or loops forever)
@@ -577,9 +648,11 @@ function throwError(msg: string): never {
 }
 ```
 
+`logMessage` runs and finishes, but its return value isn't useful. `throwError` never finishes — it always throws, so no code after it will ever run.
+
 ### Typing Callbacks in React (Preview)
 
-Event handlers in React follow the same rules:
+Event handlers in React follow the same rules. Here's an interface with two callback properties:
 
 ```ts
 interface FormProps {
@@ -587,6 +660,8 @@ interface FormProps {
   onChange: (field: string, value: string) => void;
 }
 ```
+
+`onSubmit` is a function that receives a `FormData` object and returns nothing. `onChange` is a function that receives two strings (the field name and its new value) and returns nothing. These type annotations ensure that any component using `FormProps` passes the right kind of functions.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
@@ -617,7 +692,7 @@ TypeScript ships with built-in utility types that transform existing types. Thes
 
 ### Partial\<T\>
 
-Makes all properties optional. Useful for update operations where you only change some fields:
+`Partial<User>` takes the `User` interface and makes every property optional. This is useful for update operations where you only change some fields:
 
 ```ts
 interface User {
@@ -633,9 +708,11 @@ function updateUser(id: number, changes: Partial<User>) {
 updateUser(1, { email: 'new@example.com' }); // valid
 ```
 
+Without `Partial`, you'd have to pass all three properties every time. With `Partial<User>`, the `changes` parameter accepts an object with any subset of `User`'s properties — just `email`, just `name` and `age`, or all three.
+
 ### Required\<T\>
 
-The opposite of `Partial` — makes all properties required:
+The opposite of `Partial` — makes all properties required, even ones that were originally optional:
 
 ```ts
 interface Config {
@@ -651,27 +728,33 @@ const fullConfig: Required<Config> = {
 };
 ```
 
+`Config` has all optional properties (note the `?` on each). `Required<Config>` strips the `?` from every property, so `fullConfig` must include all three.
+
 ### Pick\<T, Keys\>
 
-Creates a type with only the specified properties:
+Creates a new type with only the specified properties from the original:
 
 ```ts
 type UserSummary = Pick<User, 'name' | 'email'>;
 // { name: string; email: string }
 ```
 
+`Pick<User, 'name' | 'email'>` pulls out just the `name` and `email` properties from `User`, ignoring `age`. The result is a smaller type with only the fields you listed.
+
 ### Omit\<T, Keys\>
 
-Creates a type with all properties except the specified ones:
+The opposite of `Pick` — creates a type with all properties _except_ the specified ones:
 
 ```ts
 type CreateUserInput = Omit<User, 'id' | 'createdAt'>;
 // Everything from User except id and createdAt
 ```
 
+This is useful when some fields are generated automatically (like `id`) and shouldn't be provided by the caller.
+
 ### Record\<Keys, Value\>
 
-Creates an object type where all keys have the same value type:
+Creates an object type where every key has the same value type. The first parameter defines the keys, the second defines the value type:
 
 ```ts
 type UserRoles = Record<string, 'admin' | 'editor' | 'viewer'>;
@@ -683,7 +766,9 @@ const roles: UserRoles = {
 };
 ```
 
-`Record` is also useful for lookup maps:
+`Record<string, 'admin' | 'editor' | 'viewer'>` means: an object with string keys where every value must be one of those three role strings.
+
+`Record` is also useful for lookup maps where the keys come from a union:
 
 ```ts
 type StatusLabels = Record<Status, string>;
@@ -695,14 +780,18 @@ const labels: StatusLabels = {
 };
 ```
 
+Here `Record<Status, string>` requires one entry for every value in the `Status` union. If you forget one, TypeScript will flag it.
+
 ### Combining Utility Types
 
-These compose naturally:
+These utility types compose naturally — you can nest and combine them:
 
 ```ts
 // An update payload: all user fields optional, except id which is required
 type UpdateUser = Partial<Omit<User, 'id'>> & Pick<User, 'id'>;
 ```
+
+Reading from the inside out: `Omit<User, 'id'>` removes `id`, `Partial<...>` makes the remaining fields optional, and `& Pick<User, 'id'>` adds `id` back as required. The result is a type where `id` is mandatory but everything else is optional.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
@@ -755,9 +844,11 @@ const response = await fetch('/api/users');
 const data = await response.json(); // type: any — no safety here
 ```
 
+Because `data` is `any`, TypeScript won't catch misspelled property names, wrong types, or missing fields. You could write `data.naem` and TypeScript wouldn't complain.
+
 ### Typing API Responses
 
-Define types that match your API's response shape and assert them:
+The solution is to define types that match your API's response shape and use them to annotate the result:
 
 ```ts
 interface User {
@@ -783,9 +874,11 @@ async function fetchUsers(): Promise<ApiResponse<User[]>> {
 }
 ```
 
-Now every consumer of `fetchUsers()` gets full type checking and autocomplete on the result.
+The return type `Promise<ApiResponse<User[]>>` means this function returns a promise that resolves to an `ApiResponse` where `data` is an array of `User` objects. The annotation `const json: ApiResponse<User[]>` on the `.json()` result tells TypeScript to treat the parsed JSON as that shape. Now every consumer of `fetchUsers()` gets full type checking and autocomplete on the result.
 
 ### A Reusable Fetch Wrapper
+
+You can write a generic wrapper that works for any response type. The caller specifies the expected type using `<T>` at the call site:
 
 ```ts
 async function api<T>(url: string): Promise<T> {
@@ -801,6 +894,8 @@ async function api<T>(url: string): Promise<T> {
 const users = await api<User[]>('/api/users');
 const product = await api<Product>('/api/products/42');
 ```
+
+`api<User[]>(...)` fills in `T = User[]`, so TypeScript knows `users` is a `User[]`. `api<Product>(...)` fills in `T = Product`, so `product` is a `Product`. The `as Promise<T>` tells TypeScript to treat the result of `.json()` as the type the caller specified.
 
 ### Handling Fetch Failures
 
@@ -825,7 +920,7 @@ async function safeFetch<T>(url: string): Promise<FetchResult<T>> {
 }
 ```
 
-This pattern makes it impossible to accidentally use the data without first checking that the request succeeded.
+`FetchResult<T>` is a union of two shapes: a success case with `ok: true` and a `data` field, and a failure case with `ok: false` and an `error` message. This pattern makes it impossible to accidentally use `data` without first checking that `ok` is `true` — TypeScript only makes `data` available after you've narrowed to the success case.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
@@ -871,7 +966,7 @@ When you have a union type, TypeScript needs you to **narrow** the type before y
 
 ### Built-in Narrowing
 
-TypeScript understands standard JavaScript checks:
+TypeScript understands standard JavaScript checks and uses them to narrow union types:
 
 ```ts
 function formatId(id: string | number): string {
@@ -882,22 +977,24 @@ function formatId(id: string | number): string {
 }
 ```
 
-Other built-in narrowing:
+The parameter `id` starts as `string | number`. Inside the `if` block, the `typeof` check tells TypeScript that `id` must be a `string`, so `.toUpperCase()` is allowed. After the `if`, TypeScript knows only `number` remains, so `.toFixed(2)` is allowed. This is narrowing in action.
+
+Other built-in narrowing patterns:
 
 ```ts
-// instanceof
+// instanceof — checks if a value is an instance of a class
 if (error instanceof TypeError) {
   console.log(error.message); // TypeScript knows it's a TypeError
 }
 
-// truthiness
+// truthiness — null and undefined are falsy, so a truthy check eliminates them
 function greet(name: string | null) {
   if (name) {
     console.log(name.toUpperCase()); // TypeScript knows name is string
   }
 }
 
-// in operator
+// in operator — checks if a property exists on the object
 type Fish = { swim: () => void };
 type Bird = { fly: () => void };
 
@@ -908,9 +1005,11 @@ function move(animal: Fish | Bird) {
 }
 ```
 
+In the `move` function, `animal` is `Fish | Bird`. The `'swim' in animal` check tells TypeScript that `animal` must be a `Fish` (since only `Fish` has `swim`), so `animal.swim()` is safe inside that block.
+
 ### Custom Type Guard Functions
 
-For more complex checks, write a function that returns a **type predicate** (`paramName is Type`):
+For more complex checks, you can write a function that returns a **type predicate**. A type predicate has the form `paramName is Type` — it tells TypeScript that if the function returns `true`, the parameter is the specified type:
 
 ```ts
 interface User {
@@ -936,9 +1035,11 @@ function showDashboard(person: User | Admin) {
 }
 ```
 
+The return type `person is Admin` is the type predicate. It tells TypeScript: "if `isAdmin` returns `true`, then `person` is an `Admin`." Inside the `if` block, TypeScript narrows `person` to `Admin`, so you can safely access `person.permissions`.
+
 ### Discriminated Unions and Exhaustive Checks
 
-When every variant of a union has a common literal field, TypeScript can narrow automatically in `switch` statements:
+When every variant of a union has a common literal field (the "discriminant"), TypeScript can narrow automatically in `switch` statements by checking that field:
 
 ```ts
 type Action =
@@ -958,7 +1059,9 @@ function reduce(state: string[], action: Action): string[] {
 }
 ```
 
-This pattern maps directly to how you'll write reducers in React. If you later add a new action type and forget to handle it, TypeScript can catch that with an exhaustiveness check:
+The `type` field is the discriminant — each variant has a different literal value (`'add'`, `'remove'`, `'clear'`). In the `case 'add'` branch, TypeScript knows `action` is the `{ type: 'add'; item: string }` variant, so `action.item` is available. In the `case 'remove'` branch, `action.index` is available.
+
+This pattern maps directly to how you'll write reducers in React. If you later add a new action type and forget to handle it, TypeScript can catch that with an **exhaustiveness check**:
 
 ```ts
 function assertNever(value: never): never {
@@ -970,7 +1073,7 @@ default:
   return assertNever(action);
 ```
 
-If any variant isn't handled, `action` won't be `never` and TypeScript will report an error at compile time.
+The `never` type means "this should be impossible." If every variant is handled in the `switch`, then `action` in the `default` case is `never` — there are no possibilities left. But if you add a new variant and forget a `case`, `action` won't be `never` and TypeScript will report an error at compile time, reminding you to handle it.
 
 <details>
 <summary><strong>Try it yourself</strong></summary>
