@@ -48,7 +48,8 @@ This creates a `tsconfig.json` file with many options (most commented out). Here
 }
 ```
 
-Make sure your `package.json` includes `"type": "module"` so Node.js uses ES modules.
+> [!IMPORTANT]
+> Make sure your `package.json` includes `"type": "module"` so Node.js uses ES modules.
 
 What these options mean:
 
@@ -130,7 +131,7 @@ npx tsx --watch example.ts
 | Quick experiments, learning  | `node file.ts` (Node.js v22.18+ or v23.6+)            |
 | Running scripts, dev servers | `tsx`                                                 |
 | Production projects, CI/CD   | `tsc` for type-checking + build                       |
-| React apps                   | A framework like Vite or Next.js handles this for you |
+| Framework-based apps         | Vite, Next.js, etc. handle this for you               |
 
 In practice, many projects combine these: `tsx` for fast development, `tsc` for type-checking in CI, and a bundler (Vite, webpack) for the production build.
 
@@ -201,32 +202,9 @@ export default tseslint.config(
 
 This gives you a solid set of rules out of the box, including TypeScript-specific rules like catching unused variables, preferring `const`, and flagging unsafe `any` usage.
 
-### Stricter Type-Checked Rules
+### Stricter Rules
 
-For projects that want deeper analysis, `typescript-eslint` can use your TypeScript compiler's type information to catch more issues:
-
-```js
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-
-export default tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  {
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-  },
-  {
-    ignores: ['dist/'],
-  },
-);
-```
-
-Type-checked rules can catch things like floating (unhandled) promises, unsafe type assertions, and incorrect use of conditional expressions.
+The `recommended` config is a good starting point. When you're ready for stricter checks, `typescript-eslint` offers `strict` and `strictTypeChecked` configs that catch more issues — like unhandled promises, unsafe type assertions, and unnecessary conditions. See the [typescript-eslint docs](https://typescript-eslint.io/getting-started) for details.
 
 ### Running ESLint
 
