@@ -8,7 +8,6 @@ This is a TypeScript learning track for the HackYourFuture curriculum. The targe
 
 ## File Structure
 
-- `topics.md` — topic outline defining the TypeScript concepts to be covered
 - `TYPESCRIPT.md` — main learning document with a section per topic (type system, generics, utility types, type guards, etc.). Includes a quick start for running `.ts` files with Node.js and hands-on exercises
 - `TOOLING.md` — setting up TypeScript project tooling (transpilation with `tsc`, fast dev with `tsx`, optional ESLint)
 
