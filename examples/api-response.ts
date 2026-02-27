@@ -1,24 +1,41 @@
+type FetchResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+async function safeFetch<T>(url: string): Promise<FetchResult<T>> {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return { ok: false, error: `HTTP ${response.status}` };
+    }
+
+    const data: T = await response.json();
+    return { ok: true, data };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
 interface User {
   id: number;
   name: string;
+  username: string;
   email: string;
 }
 
-interface ApiResponse<T> {
-  data: T;
-  total: number;
+// This should succeed
+const userResult = await safeFetch<User>('https://jsonplaceholder.typicode.com/users/1');
+
+if (userResult.ok) {
+  console.log(`User: ${userResult.data.name} (${userResult.data.email})`);
+} else {
+  console.error(`Failed to fetch user: ${userResult.error}`);
 }
 
-function fetchUsers(): ApiResponse<User[]> {
-  return {
-    data: [
-      { id: 1, name: 'Aisha', email: 'aisha@example.com' },
-      { id: 2, name: 'Ben', email: 'ben@example.com' },
-    ],
-    total: 2,
-  };
-}
+// This should fail with HTTP 404
+const badResult = await safeFetch<User>('https://jsonplaceholder.typicode.com/users/9999');
 
-const result = fetchUsers();
-console.log(`Fetched ${result.total} users:`);
-result.data.forEach((user) => console.log(`  ${user.name} (${user.email})`));
+if (badResult.ok) {
+  console.log(`User: ${badResult.data.name}`);
+} else {
+  console.error(`Failed to fetch user: ${badResult.error}`);
+}

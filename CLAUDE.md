@@ -8,8 +8,20 @@ This is a TypeScript learning track for the HackYourFuture curriculum. The targe
 
 ## File Structure
 
-- `TYPESCRIPT.md` — main learning document with a section per topic (type system, generics, utility types, type guards, etc.). Includes a quick start for running `.ts` files with Node.js and hands-on exercises
-- `TOOLING.md` — setting up TypeScript project tooling (transpilation with `tsc`, fast dev with `tsx`, optional ESLint)
+- `pages/` — one markdown file per topic, intended to be copied to Notion as individual pages:
+  - `00-introduction.md` — Week 3 Overview with learning goals
+  - `01-quick-start.md` — running `.ts` files with Node.js
+  - `02-type-system.md` — primitives, arrays, objects, and unions
+  - `03-interfaces-vs-types.md` — `interface` vs `type` aliases
+  - `04-generics.md` — type parameters, generic interfaces, constraints
+  - `05-type-inference.md` — inference vs explicit annotations
+  - `06-unions-and-intersections.md` — unions (`|`), intersections (`&`), discriminated unions
+  - `07-function-types.md` — parameter/return types, optional/default params, function type expressions
+  - `08-utility-types.md` — `Partial`, `Required`, `Pick`, `Omit`, `Record`
+  - `09-api-responses.md` — typing fetch responses, generic wrappers
+  - `10-type-guards.md` — narrowing, type predicates, exhaustiveness checks
+  - `TOOLING.md` — setting up TypeScript project tooling (transpilation with `tsc`, fast dev with `tsx`, optional ESLint)
+- `examples/` — runnable `.ts` files matching each page's "Hands on" exercise (e.g., `basics.ts`, `generics.ts`)
 
 ## Writing Guidelines
 
@@ -18,6 +30,7 @@ This is a TypeScript learning track for the HackYourFuture curriculum. The targe
 - **Self-contained examples.** Explanatory code blocks should define all the types they use. Don't reference types from other sections without redefining them.
 - **Use GitHub alert blocks** (`[!IMPORTANT]`, `[!TIP]`, etc.) for callouts — not bold-prefix blockquotes.
 - **Exercises use `node file.ts`** — trainees are expected to have Node.js v22.18+ or v23.6+ (or upgrade to current LTS). No experimental flags needed.
+- **Keep `examples/` in sync.** When you add or update a "Hands on" exercise in a page, copy the code to the corresponding `.ts` file in `examples/`. The file name should match the one in the "Save as" instruction (e.g., `basics.ts`, `api-response.ts`).
 
 ## Current State
 
