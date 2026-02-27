@@ -2,7 +2,7 @@
 
 Running `node example.ts` is fine for learning and quick experiments (see [TYPESCRIPT.md](TYPESCRIPT.md) for details). But for real projects you need proper tooling: a compiler that type-checks and transpiles your code, and a linter that catches style and correctness issues.
 
-This document covers setting up a TypeScript project with the TypeScript compiler (`tsc`), using `tsx` for fast development, and optionally adding ESLint.
+This document covers setting up a TypeScript project with the TypeScript compiler (`tsc`) and optionally adding ESLint.
 
 ---
 
@@ -97,45 +97,6 @@ npx tsc --watch            # recompile automatically on file changes
   }
 }
 ```
-
----
-
-## Using tsx for Fast Development
-
-`tsx` is a drop-in replacement for `node` that runs TypeScript files using `esbuild` under the hood. It's much faster than `tsc` for running code because it strips types without type-checking. It supports both CommonJS and ES modules with zero configuration.
-
-Install it:
-
-```bash
-npm install --save-dev tsx
-```
-
-Run a file:
-
-```bash
-npx tsx example.ts
-```
-
-Watch mode (re-runs on file changes):
-
-```bash
-npx tsx --watch example.ts
-```
-
-`tsx` is great for development — running scripts, prototyping, and local dev servers. For production builds and CI, you'll still want `tsc` to type-check your code.
-
-### When to Use What
-
-| Scenario                     | Tool                                                  |
-| ---------------------------- | ----------------------------------------------------- |
-| Quick experiments, learning  | `node file.ts` (Node.js v22.18+ or v23.6+)            |
-| Running scripts, dev servers | `tsx`                                                 |
-| Production projects, CI/CD   | `tsc` for type-checking + build                       |
-| Framework-based apps         | Vite, Next.js, etc. handle this for you               |
-
-In practice, many projects combine these: `tsx` for fast development, `tsc` for type-checking in CI, and a bundler (Vite, webpack) for the production build.
-
----
 
 ## What Does "Removing Types" Mean?
 
