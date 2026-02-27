@@ -1,6 +1,6 @@
 # TypeScript Tooling
 
-Running `node example.ts` is fine for learning and quick experiments (see [TYPESCRIPT.md](TYPESCRIPT.md) for details). But for real projects you need proper tooling: a compiler that type-checks and transpiles your code, and a linter that catches style and correctness issues.
+Running `node example.ts` is fine for learning and quick experiments. But for real projects you need proper tooling: a compiler that type-checks and transpiles your code, and a linter that catches style and correctness issues.
 
 This document covers setting up a TypeScript project with the TypeScript compiler (`tsc`) and optionally adding ESLint.
 
