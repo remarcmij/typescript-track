@@ -20,7 +20,7 @@ This is a TypeScript learning track for the HackYourFuture curriculum. The targe
   - `08-utility-types.md` — `Partial`, `Required`, `Pick`, `Omit`, `Record`
   - `09-api-responses.md` — typing fetch responses, generic wrappers
   - `10-type-guards.md` — narrowing, type predicates, exhaustiveness checks
-  - `TOOLING.md` — setting up TypeScript project tooling (transpilation with `tsc`, fast dev with `tsx`, optional ESLint)
+  - `TOOLING.md` — setting up TypeScript project tooling (transpilation with `tsc`, optional ESLint)
 - `examples/` — runnable `.ts` files matching each page's "Hands on" exercise (e.g., `basics.ts`, `generics.ts`)
 
 ## Writing Guidelines
