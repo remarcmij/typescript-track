@@ -2,9 +2,22 @@
 
 Work through these exercises independently. Each one covers a different part of the curriculum — if you get stuck, the note at the top of each exercise tells you which page to review.
 
+## Setup
+
+Create a dedicated folder for your work and initialise it as an ES module project:
+
+```
+mkdir typescript-practice
+cd typescript-practice
+npm init -y
+npm pkg set type=module
+```
+
+The `type=module` setting tells Node.js to treat every `.js` and `.ts` file in the folder as an ES module, which is required for top-level `await` in Exercise 7.
+
 ## How to run your code
 
-Save each exercise to the filename shown, then run it directly:
+Save each exercise file to your `typescript-practice` folder, then run it directly:
 
 ```
 node types.ts
@@ -12,7 +25,7 @@ node shapes.ts
 # etc.
 ```
 
-Node.js v22.18+ and v23.6+ support TypeScript files natively with no build step needed.
+Node.js v22.18+ and v23.6+ support TypeScript files natively — no build step needed.
 
 ---
 
