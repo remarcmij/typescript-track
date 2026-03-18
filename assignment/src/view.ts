@@ -1,0 +1,144 @@
+import type { Task, TaskHandlers, FilterStatus } from "./types.js";
+
+function escapeHtml(str: string): string {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+export function createAppShell(
+  root: HTMLElement,
+  handlers: TaskHandlers,
+): void {
+  root.innerHTML = String.raw`
+    <h1>To-Do List</h1>
+    <form class="todo-form">
+      <input type="text" id="title-input" placeholder="Task title" required>
+      <input type="text" id="desc-input" placeholder="Description (optional)">
+      <button type="submit">Add Task</button>
+    </form>
+    <div class="filter-bar">
+      <button type="button" data-filter="all" class="active">All</button>
+      <button type="button" data-filter="pending">Pending</button>
+      <button type="button" data-filter="completed">Completed</button>
+    </div>
+    <ul class="task-list"></ul>`;
+
+  const form = root.querySelector<HTMLFormElement>(".todo-form")!;
+  const titleInput = root.querySelector<HTMLInputElement>("#title-input")!;
+  const descInput = root.querySelector<HTMLInputElement>("#desc-input")!;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = titleInput.value.trim();
+    if (!title) return;
+    handlers.onAdd(title, descInput.value.trim());
+    form.reset();
+  });
+
+  for (const btn of root.querySelectorAll<HTMLButtonElement>(
+    ".filter-bar button",
+  )) {
+    btn.addEventListener("click", () => {
+      handlers.onFilter(btn.dataset.filter as FilterStatus);
+    });
+  }
+}
+
+export function renderTaskList(
+  container: HTMLElement,
+  tasks: Task[],
+  handlers: TaskHandlers,
+): void {
+  if (tasks.length === 0) {
+    container.innerHTML = `<li class="empty-state">No tasks to show.</li>`;
+    return;
+  }
+
+  container.innerHTML = tasks
+    .map(
+      (task) => String.raw`
+      <li class="task-item${task.completed ? " completed" : ""}" data-id="${task.id}">
+        <input type="checkbox"${task.completed ? " checked" : ""}>
+        <div class="task-content">
+          <div class="task-title">${escapeHtml(task.title)}</div>
+          <div class="task-description">${escapeHtml(task.description)}</div>
+        </div>
+        <div class="task-actions">
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </div>
+      </li>`,
+    )
+    .join("");
+
+  for (const li of container.querySelectorAll<HTMLLIElement>(".task-item")) {
+    const id = li.dataset.id!;
+    const task = tasks.find((t) => t.id === id)!;
+
+    li.querySelector<HTMLInputElement>("input[type='checkbox']")!
+      .addEventListener("change", () => handlers.onToggle(id));
+
+    li.querySelector<HTMLButtonElement>(".edit-btn")!
+      .addEventListener("click", () => enterEditMode(li, task, handlers));
+
+    li.querySelector<HTMLButtonElement>(".delete-btn")!
+      .addEventListener("click", () => handlers.onDelete(id));
+  }
+}
+
+function enterEditMode(
+  li: HTMLLIElement,
+  task: Task,
+  handlers: TaskHandlers,
+): void {
+  li.innerHTML = String.raw`
+    <input type="checkbox"${task.completed ? " checked" : ""}>
+    <div class="edit-form">
+      <input type="text" class="edit-title" value="${escapeHtml(task.title)}">
+      <input type="text" class="edit-desc" value="${escapeHtml(task.description)}">
+      <div class="edit-actions">
+        <button class="save-btn">Save</button>
+        <button class="cancel-btn">Cancel</button>
+      </div>
+    </div>`;
+
+  const checkbox = li.querySelector<HTMLInputElement>("input[type='checkbox']")!;
+  const titleInput = li.querySelector<HTMLInputElement>(".edit-title")!;
+  const descInput = li.querySelector<HTMLInputElement>(".edit-desc")!;
+
+  checkbox.addEventListener("change", () => handlers.onToggle(task.id));
+
+  li.querySelector<HTMLButtonElement>(".save-btn")!
+    .addEventListener("click", () => {
+      const newTitle = titleInput.value.trim();
+      if (!newTitle) return;
+      handlers.onEdit(task.id, newTitle, descInput.value.trim());
+    });
+
+  li.querySelector<HTMLButtonElement>(".cancel-btn")!
+    .addEventListener("click", () => {
+      const activeFilter =
+        (document.querySelector(".filter-bar .active") as HTMLElement)?.dataset
+          .filter as FilterStatus ?? "all";
+      handlers.onFilter(activeFilter);
+    });
+
+  titleInput.focus();
+}
+
+export function updateFilterButtons(
+  container: HTMLElement,
+  activeFilter: FilterStatus,
+): void {
+  const buttons = container.querySelectorAll<HTMLButtonElement>("[data-filter]");
+  for (const btn of buttons) {
+    btn.classList.toggle("active", btn.dataset.filter === activeFilter);
+  }
+}
+
+export function clearForm(form: HTMLFormElement): void {
+  form.reset();
+}
