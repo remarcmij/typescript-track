@@ -1,121 +1,158 @@
-import type { Task, TaskHandlers, FilterStatus } from "../types.js";
+import type { FilterStatus, Task, TaskHandlers } from './types.js';
 
-/**
- * Escape special HTML characters to prevent XSS when interpolating
- * user input into innerHTML templates.
- */
 function escapeHtml(str: string): string {
   return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 }
 
 export class View {
   private taskList: HTMLUListElement;
   private filterBar: HTMLDivElement;
+  private handlers: TaskHandlers;
 
-  /**
-   * Build the entire app shell inside the root element.
-   *
-   * Steps:
-   * 1. Set root.innerHTML using a String.raw template with this structure:
-   *      <h1>To-Do List</h1>
-   *      <form class="todo-form">
-   *        <input type="text" id="title-input" placeholder="Task title" required>
-   *        <input type="text" id="desc-input" placeholder="Description (optional)">
-   *        <button type="submit">Add Task</button>
-   *      </form>
-   *      <div class="filter-bar">
-   *        <button type="button" data-filter="all" class="active">All</button>
-   *        <button type="button" data-filter="pending">Pending</button>
-   *        <button type="button" data-filter="completed">Completed</button>
-   *      </div>
-   *      <ul class="task-list"></ul>
-   *
-   * 2. Use querySelector to find the form, title input, description input,
-   *    .task-list, and .filter-bar. Store taskList and filterBar on `this`.
-   * 3. Add a "submit" listener on the form that calls handlers.onAdd with the
-   *    trimmed title and description, then resets the form.
-   * 4. Use querySelectorAll to find filter buttons and add "click" listeners
-   *    that call handlers.onFilter with the button's data-filter value.
-   */
   constructor(root: HTMLElement, handlers: TaskHandlers) {
-    // TODO: Set root.innerHTML using a String.raw template with the HTML above
+    this.handlers = handlers;
 
-    // TODO: querySelector for the form, #title-input, #desc-input
-    // TODO: querySelector .task-list and .filter-bar — assign to this.taskList and this.filterBar
+    root.innerHTML = String.raw`
+    <h1>To-Do List</h1>
+    <form class="todo-form">
+      <input type="text" id="title-input" placeholder="Task title" required>
+      <input type="text" id="desc-input" placeholder="Description (optional)">
+      <button type="submit">Add Task</button>
+    </form>
+    <div class="filter-bar">
+      <button type="button" data-filter="all" class="active">All</button>
+      <button type="button" data-filter="pending">Pending</button>
+      <button type="button" data-filter="completed">Completed</button>
+    </div>
+    <ul class="task-list"></ul>`;
 
-    // TODO: addEventListener("submit") on the form — call handlers.onAdd
+    const form = root.querySelector<HTMLFormElement>('.todo-form')!;
+    const titleInput = root.querySelector<HTMLInputElement>('#title-input')!;
+    const descInput = root.querySelector<HTMLInputElement>('#desc-input')!;
+    this.taskList = root.querySelector<HTMLUListElement>('.task-list')!;
+    this.filterBar = root.querySelector<HTMLDivElement>('.filter-bar')!;
 
-    // TODO: querySelectorAll filter buttons — addEventListener("click") for each
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      if (!title) return;
+      this.handlers.onAdd(title, descInput.value.trim());
+      form.reset();
+    });
 
-    // These placeholder assignments satisfy tsc — replace them with real queries
-    this.taskList = root.querySelector(".task-list")!;
-    this.filterBar = root.querySelector(".filter-bar")!;
+    for (const btn of root.querySelectorAll<HTMLButtonElement>(
+      '.filter-bar button'
+    )) {
+      btn.addEventListener('click', () => {
+        this.handlers.onFilter(btn.dataset.filter as FilterStatus);
+      });
+    }
   }
 
-  /**
-   * Render the list of tasks into the task list element.
-   *
-   * Steps:
-   * 1. If tasks is empty, set this.taskList.innerHTML to a single
-   *    <li class="empty-state">No tasks to show.</li> and return.
-   * 2. Otherwise, set this.taskList.innerHTML by mapping tasks to HTML strings:
-   *    Each task becomes a <li class="task-item" data-id="..."> containing:
-   *      - <input type="checkbox"> (checked if completed)
-   *      - <div class="task-content"> with .task-title and .task-description
-   *      - <div class="task-actions"> with .edit-btn and .delete-btn buttons
-   *    Use escapeHtml() on task.title and task.description!
-   * 3. After setting innerHTML, querySelectorAll(".task-item") and for each li:
-   *      - Find the checkbox → addEventListener("change") → handlers.onToggle(id)
-   *      - Find .edit-btn → addEventListener("click") → this.enterEditMode(li, task, handlers)
-   *      - Find .delete-btn → addEventListener("click") → handlers.onDelete(id)
-   */
-  renderTaskList(tasks: Task[], handlers: TaskHandlers): void {
-    // TODO: Handle empty state — set this.taskList.innerHTML to empty-state li
-
-    // TODO: Set this.taskList.innerHTML using tasks.map() with String.raw templates
-    //       Remember to use escapeHtml() on title and description
-
-    // TODO: querySelectorAll(".task-item") and attach event listeners
+  // TODO: Replace `any[]` with `Task[]`
+  render(tasks: any[], activeFilter: FilterStatus): void {
+    this.renderTaskList(tasks);
+    this.updateFilterButtons(activeFilter);
   }
 
-  /**
-   * Update the filter buttons to show which filter is currently active.
-   * Find all buttons with a data-filter attribute inside this.filterBar,
-   * and toggle the "active" class based on whether data-filter matches activeFilter.
-   */
-  updateFilterButtons(activeFilter: FilterStatus): void {
-    // TODO: Query all buttons with [data-filter] and toggle the "active" class
+  // TODO: Replace `any[]` with `Task[]`
+  private renderTaskList(tasks: any[]): void {
+    if (tasks.length === 0) {
+      this.taskList.innerHTML = `<li class="empty-state">No tasks to show.</li>`;
+      return;
+    }
+
+    this.taskList.innerHTML = tasks
+      .map(
+        (task) => String.raw`
+      <li class="task-item${task.completed ? ' completed' : ''}" data-id="${task.id}">
+        <input type="checkbox"${task.completed ? ' checked' : ''}>
+        <div class="task-content">
+          <div class="task-title">${escapeHtml(task.title)}</div>
+          <div class="task-description">${escapeHtml(task.description)}</div>
+        </div>
+        <div class="task-actions">
+          <button class="edit-btn">Edit</button>
+          <button class="delete-btn">Delete</button>
+        </div>
+      </li>`
+      )
+      .join('');
+
+    for (const li of this.taskList.querySelectorAll<HTMLLIElement>(
+      '.task-item'
+    )) {
+      const id = li.dataset.id!;
+      const task = tasks.find((t) => t.id === id)!;
+
+      li.querySelector<HTMLInputElement>(
+        "input[type='checkbox']"
+      )!.addEventListener('change', () => this.handlers.onToggle(id));
+
+      li.querySelector<HTMLButtonElement>('.edit-btn')!.addEventListener(
+        'click',
+        () => this.enterEditMode(li, task)
+      );
+
+      li.querySelector<HTMLButtonElement>('.delete-btn')!.addEventListener(
+        'click',
+        () => this.handlers.onDelete(id)
+      );
+    }
   }
 
-  /**
-   * Replace a task's display HTML with an inline edit form.
-   *
-   * Steps:
-   * 1. Set li.innerHTML to an edit form with:
-   *    - A checkbox (checked if task.completed)
-   *    - Two text inputs (.edit-title, .edit-desc) pre-filled with task values
-   *    - Save and Cancel buttons
-   * 2. Attach listeners:
-   *    - checkbox change → handlers.onToggle(task.id)
-   *    - save click → handlers.onEdit with trimmed values (skip if title empty)
-   *    - cancel click → handlers.onFilter with current active filter to re-render
-   * 3. Focus the title input
-   */
-  private enterEditMode(
-    li: HTMLLIElement,
-    task: Task,
-    handlers: TaskHandlers,
-  ): void {
-    // TODO: Set li.innerHTML with edit form template
+  private updateFilterButtons(activeFilter: FilterStatus): void {
+    const buttons =
+      this.filterBar.querySelectorAll<HTMLButtonElement>('[data-filter]');
+    for (const btn of buttons) {
+      btn.classList.toggle('active', btn.dataset.filter === activeFilter);
+    }
+  }
 
-    // TODO: querySelector for checkbox, .edit-title, .edit-desc
+  // TODO: Replace `any` with `Task`
+  private enterEditMode(li: HTMLLIElement, task: any): void {
+    li.innerHTML = String.raw`
+    <input type="checkbox"${task.completed ? ' checked' : ''}>
+    <div class="edit-form">
+      <input type="text" class="edit-title" value="${escapeHtml(task.title)}">
+      <input type="text" class="edit-desc" value="${escapeHtml(task.description)}">
+      <div class="edit-actions">
+        <button class="save-btn">Save</button>
+        <button class="cancel-btn">Cancel</button>
+      </div>
+    </div>`;
 
-    // TODO: Attach event listeners for checkbox, save, and cancel
+    const checkbox = li.querySelector<HTMLInputElement>(
+      "input[type='checkbox']"
+    )!;
+    const titleInput = li.querySelector<HTMLInputElement>('.edit-title')!;
+    const descInput = li.querySelector<HTMLInputElement>('.edit-desc')!;
 
-    // TODO: Focus the title input
+    checkbox.addEventListener('change', () => this.handlers.onToggle(task.id));
+
+    li.querySelector<HTMLButtonElement>('.save-btn')!.addEventListener(
+      'click',
+      () => {
+        const newTitle = titleInput.value.trim();
+        if (!newTitle) return;
+        this.handlers.onEdit(task.id, newTitle, descInput.value.trim());
+      }
+    );
+
+    li.querySelector<HTMLButtonElement>('.cancel-btn')!.addEventListener(
+      'click',
+      () => {
+        const activeFilter =
+          ((document.querySelector('.filter-bar .active') as HTMLElement)
+            ?.dataset.filter as FilterStatus) ?? 'all';
+        this.handlers.onFilter(activeFilter);
+      }
+    );
+
+    titleInput.focus();
   }
 }

@@ -1,4 +1,4 @@
-import type { Task } from "../types.js";
+import type { Task } from "./types.js";
 
 export class TaskStore {
   private readonly STORAGE_KEY = "todo-tasks";

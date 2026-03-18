@@ -11,8 +11,11 @@ function escapeHtml(str: string): string {
 export class View {
   private taskList: HTMLUListElement;
   private filterBar: HTMLDivElement;
+  private handlers: TaskHandlers;
 
   constructor(root: HTMLElement, handlers: TaskHandlers) {
+    this.handlers = handlers;
+
     root.innerHTML = String.raw`
     <h1>To-Do List</h1>
     <form class="todo-form">
@@ -37,7 +40,7 @@ export class View {
       e.preventDefault();
       const title = titleInput.value.trim();
       if (!title) return;
-      handlers.onAdd(title, descInput.value.trim());
+      this.handlers.onAdd(title, descInput.value.trim());
       form.reset();
     });
 
@@ -45,12 +48,17 @@ export class View {
       ".filter-bar button",
     )) {
       btn.addEventListener("click", () => {
-        handlers.onFilter(btn.dataset.filter as FilterStatus);
+        this.handlers.onFilter(btn.dataset.filter as FilterStatus);
       });
     }
   }
 
-  renderTaskList(tasks: Task[], handlers: TaskHandlers): void {
+  render(tasks: Task[], activeFilter: FilterStatus): void {
+    this.renderTaskList(tasks);
+    this.updateFilterButtons(activeFilter);
+  }
+
+  private renderTaskList(tasks: Task[]): void {
     if (tasks.length === 0) {
       this.taskList.innerHTML = `<li class="empty-state">No tasks to show.</li>`;
       return;
@@ -78,28 +86,24 @@ export class View {
       const task = tasks.find((t) => t.id === id)!;
 
       li.querySelector<HTMLInputElement>("input[type='checkbox']")!
-        .addEventListener("change", () => handlers.onToggle(id));
+        .addEventListener("change", () => this.handlers.onToggle(id));
 
       li.querySelector<HTMLButtonElement>(".edit-btn")!
-        .addEventListener("click", () => this.enterEditMode(li, task, handlers));
+        .addEventListener("click", () => this.enterEditMode(li, task));
 
       li.querySelector<HTMLButtonElement>(".delete-btn")!
-        .addEventListener("click", () => handlers.onDelete(id));
+        .addEventListener("click", () => this.handlers.onDelete(id));
     }
   }
 
-  updateFilterButtons(activeFilter: FilterStatus): void {
+  private updateFilterButtons(activeFilter: FilterStatus): void {
     const buttons = this.filterBar.querySelectorAll<HTMLButtonElement>("[data-filter]");
     for (const btn of buttons) {
       btn.classList.toggle("active", btn.dataset.filter === activeFilter);
     }
   }
 
-  private enterEditMode(
-    li: HTMLLIElement,
-    task: Task,
-    handlers: TaskHandlers,
-  ): void {
+  private enterEditMode(li: HTMLLIElement, task: Task): void {
     li.innerHTML = String.raw`
     <input type="checkbox"${task.completed ? " checked" : ""}>
     <div class="edit-form">
@@ -115,13 +119,13 @@ export class View {
     const titleInput = li.querySelector<HTMLInputElement>(".edit-title")!;
     const descInput = li.querySelector<HTMLInputElement>(".edit-desc")!;
 
-    checkbox.addEventListener("change", () => handlers.onToggle(task.id));
+    checkbox.addEventListener("change", () => this.handlers.onToggle(task.id));
 
     li.querySelector<HTMLButtonElement>(".save-btn")!
       .addEventListener("click", () => {
         const newTitle = titleInput.value.trim();
         if (!newTitle) return;
-        handlers.onEdit(task.id, newTitle, descInput.value.trim());
+        this.handlers.onEdit(task.id, newTitle, descInput.value.trim());
       });
 
     li.querySelector<HTMLButtonElement>(".cancel-btn")!
@@ -129,7 +133,7 @@ export class View {
         const activeFilter =
           (document.querySelector(".filter-bar .active") as HTMLElement)?.dataset
             .filter as FilterStatus ?? "all";
-        handlers.onFilter(activeFilter);
+        this.handlers.onFilter(activeFilter);
       });
 
     titleInput.focus();

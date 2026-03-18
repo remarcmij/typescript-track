@@ -1,32 +1,31 @@
-import { Page } from "./page.js";
+import { TaskManager } from "./task-manager.js";
 import { TaskStore } from "./store.js";
 import { View } from "./view.js";
 import type { FilterStatus, TaskHandlers } from "./types.js";
 
-const page = new Page(new TaskStore());
+const taskManager = new TaskManager(new TaskStore());
 let currentFilter: FilterStatus = "all";
 let view: View;
 
 function render(): void {
-  view.renderTaskList(page.getFiltered(currentFilter), handlers);
-  view.updateFilterButtons(currentFilter);
+  view.render(taskManager.getFiltered(currentFilter), currentFilter);
 }
 
 const handlers: TaskHandlers = {
   onAdd(title, description) {
-    page.addTask(title, description);
+    taskManager.addTask(title, description);
     render();
   },
   onToggle(id) {
-    page.toggleTask(id);
+    taskManager.toggleTask(id);
     render();
   },
   onDelete(id) {
-    page.deleteTask(id);
+    taskManager.deleteTask(id);
     render();
   },
   onEdit(id, title, description) {
-    page.editTask(id, title, description);
+    taskManager.editTask(id, title, description);
     render();
   },
   onFilter(status) {

@@ -1,7 +1,7 @@
 import type { Task, FilterStatus } from "./types.js";
 import type { TaskStore } from "./store.js";
 
-export class Page {
+export class TaskManager {
   private tasks: Task[] = [];
 
   constructor(private readonly store: TaskStore) {
