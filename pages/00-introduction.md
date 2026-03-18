@@ -14,3 +14,4 @@ This week focuses on the syntax and concepts you need to start writing typed cod
 - Use built-in utility types to derive new types from existing ones.
 - Narrow union types with type guards and handle every variant of a discriminated union.
 - Type API responses from `fetch` and handle success and failure in a type-safe way.
+- Use TypeScript's DOM types to safely query and interact with HTML elements.
