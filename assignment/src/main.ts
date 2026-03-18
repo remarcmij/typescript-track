@@ -1,14 +1,14 @@
 import { TaskManager } from "./task-manager.js";
 import { TaskStore } from "./store.js";
-import { View } from "./view.js";
+import { AppView } from "./views/app-view.js";
 import type { FilterStatus, TaskHandlers } from "./types.js";
 
 const taskManager = new TaskManager(new TaskStore());
 let currentFilter: FilterStatus = "all";
-let view: View;
+let appView: AppView;
 
 function render(): void {
-  view.render(taskManager.getFiltered(currentFilter), currentFilter);
+  appView.render(taskManager.getFiltered(currentFilter), currentFilter);
 }
 
 const handlers: TaskHandlers = {
@@ -36,6 +36,6 @@ const handlers: TaskHandlers = {
 
 const app = document.getElementById("app");
 if (app) {
-  view = new View(app, handlers);
+  appView = new AppView(app, handlers);
   render();
 }

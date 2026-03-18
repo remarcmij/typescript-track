@@ -1,6 +1,6 @@
 # To-Do List Assignment
 
-A browser-based To-Do List application built with TypeScript and Vite. This assignment practices CRUD operations, DOM manipulation, localStorage persistence, and modular code architecture.
+A browser-based To-Do List application built with TypeScript and Vite.
 
 ## Getting Started
 
@@ -10,78 +10,6 @@ npm run dev
 ```
 
 Open the URL shown in the terminal (usually `http://localhost:5173`).
-
-## Architecture
-
-The app is split into four modules:
-
-| Module        | File       | Responsibility                                        |
-| ------------- | ---------- | ----------------------------------------------------- |
-| **TaskStore** | `store.ts` | Class that reads/writes tasks in localStorage          |
-| **Page**      | `page.ts`  | Class that owns the task array, delegates persistence to TaskStore |
-| **View**      | `view.ts`  | Class that owns the DOM — renders and wires events     |
-| **Main**      | `main.ts`  | Coordinator that creates all objects and defines handlers |
-
-Data flows in one direction: **user action → handler → mutate data (Page) → re-render (View)**.
-
-### Types (`src/types.ts`)
-
-Shared type definitions used by all modules:
-
-- `Task` — the data model (id, title, description, completed)
-- `FilterStatus` — `"all" | "completed" | "pending"`
-- `TaskHandlers` — callback signatures that View uses to notify Main of user actions
-
-### TaskStore (`src/store.ts`)
-
-A small class that isolates all localStorage access:
-
-- `load()` — reads and parses tasks from localStorage (returns `[]` on missing/invalid data)
-- `save(tasks)` — serializes the task array to localStorage
-
-Main creates a `TaskStore` and injects it into `Page`. Because `Page` never touches `localStorage` directly, you could swap in a different store (e.g. an in-memory fake) for testing.
-
-### Page (`src/page.ts`)
-
-A class that encapsulates the task array. It has no DOM or localStorage access:
-
-- **Constructor** — takes a `TaskStore` and loads the initial tasks from it
-- `addTask(title, description)` — creates a new task, prepends it, and saves via the store
-- `deleteTask(id)` — removes a task by id and saves
-- `toggleTask(id)` — flips a task's `completed` flag and saves
-- `editTask(id, title, description)` — updates a task's text and saves
-- `getFiltered(status)` — returns tasks matching the current filter
-
-### View (`src/view.ts`)
-
-A class that owns the DOM elements. It never touches localStorage or task data directly:
-
-- **Constructor** — receives the root element and handlers, builds the app shell (form, filter bar, task list), and wires form/filter events
-- `renderTaskList(tasks, handlers)` — clears and rebuilds the `<ul>` from the given task array, attaching checkbox/edit/delete listeners
-- `updateFilterButtons(activeFilter)` — highlights the active filter button
-
-### Main (`src/main.ts`)
-
-The coordinator script — not a class, just top-level code that wires everything together:
-
-- Creates a `TaskStore`, injects it into a new `Page`, and creates a `View`
-- Holds `currentFilter` (the only piece of state that doesn't belong to either class)
-- Defines a `handlers` object whose callbacks call Page methods then re-render via View
-- Bootstraps the app on load
-
-### Why do handlers live in main.ts?
-
-`Page` knows nothing about the DOM and `View` knows nothing about localStorage. Each handler needs to coordinate both: mutate data (Page) then update the screen (View). That coordination doesn't belong inside either class — it's the job of a separate coordinator.
-
-Look at `onAdd` as an example: it calls `page.addTask()` then calls `render()`, which asks Page for filtered data and hands it to View. Neither class could do both steps on its own without knowing about the other.
-
-`onFilter` makes the pattern even clearer — it only updates `currentFilter` and re-renders. It never touches Page at all, which proves these handlers aren't data logic. They're glue code that sits between the two classes.
-
-This separation keeps each class independently testable: you can test Page without a DOM and View without localStorage.
-
-## Your Task
-
-The `src/starter/` directory contains stub versions of `page.ts` and `view.ts` with full type signatures and TODO comments. The `main.ts` in the starter folder is provided complete.
 
 To work on the starter version, change the script source in `index.html`:
 
@@ -93,7 +21,79 @@ To work on the starter version, change the script source in `index.html`:
 <script type="module" src="/src/starter/main.ts"></script>
 ```
 
-Implement the TODO functions in `src/starter/page.ts` and `src/starter/view.ts`. Use the reference implementation in `src/` if you get stuck.
+## Architecture
+
+```
+src/
+  types.ts                  — shared type definitions
+  store.ts                  — reads/writes tasks in localStorage
+  task-manager.ts           — owns the task array, delegates persistence to TaskStore
+  views/
+    app-view.ts             — builds the app shell (form, filter bar), owns TaskListView
+    task-list-view.ts       — renders the task list into <ul>
+    task-edit-view.ts       — enterEditMode() replaces a task row with an inline edit form
+    utils.ts                — escapeHtml helper
+  main.ts                   — coordinator that creates all objects and defines handlers
+```
+
+Data flows in one direction: **user action → handler → mutate data (TaskManager) → re-render (AppView)**.
+
+## Your Task
+
+The `src/starter/` folder contains a working app — but it cheats. Type definitions are incomplete and `any` is used in several places, which means TypeScript can't catch mistakes. Your job is to make the code fully type-safe.
+
+Start with two files: `types.ts` and `task-manager.ts`. The view files have a few `any` placeholders to fix as well once your types are in place.
+
+### Step 1 — Complete the type definitions (`types.ts`)
+
+The starter has stub types that compile but provide no safety:
+
+```ts
+export interface Task {}          // empty — no properties checked
+export type FilterStatus = any;   // accepts anything, not just the 3 valid filters
+```
+
+`TaskHandlers` is already complete — you can use it as a reference.
+
+Read the other files to discover what properties `Task` needs and what values `FilterStatus` should accept. Hints:
+
+- `task-list-view.ts` accesses properties on each task (`.id`, `.title`, etc.) — what types should they be?
+- The filter buttons in `app-view.ts` have `data-filter` attributes with the valid filter values.
+
+### Step 2 — Implement the TaskManager methods (`task-manager.ts`)
+
+Five methods have `// TODO` bodies. The method signatures tell you everything you need:
+
+- `addTask(title, description)` — create a `Task` object and prepend it to `this.tasks`
+- `deleteTask(id)` — remove the task with the given id
+- `toggleTask(id)` — flip the `completed` flag on the matching task
+- `editTask(id, title, description)` — update the title and description on the matching task
+- `getFiltered(status)` — return tasks matching the filter status
+
+Each method should call `this.save()` after modifying the array (except `getFiltered`, which is read-only).
+
+### Step 3 — Replace `any` with proper types
+
+Once your types are complete, search for `any` across the starter files and replace each one with the correct type. You'll find them in:
+
+- `task-manager.ts` — `any[]` → `Task[]` (the tasks array and getFiltered return type)
+- `app-view.ts` — `any[]` → `Task[]` (the render method)
+- `task-list-view.ts` — `any[]` → `Task[]` (the render method)
+- `task-edit-view.ts` — `any` → `Task` (the task parameter)
+
+After replacing all `any` types, run `npx tsc --noEmit` from the `assignment/` folder — it should pass with zero errors.
+
+## Checking Your Work
+
+Run the type checker:
+
+```bash
+npx tsc --noEmit
+```
+
+Then test the app in the browser — you should be able to add, toggle, edit, delete, and filter tasks, with data persisting across page refreshes.
+
+If you get stuck, the reference implementation in `src/` (outside `starter/`) contains the complete solution.
 
 ## Features
 
