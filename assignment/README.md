@@ -13,15 +13,16 @@ Open the URL shown in the terminal (usually `http://localhost:5173`).
 
 ## Architecture
 
-The app is split into three modules:
+The app is split into four modules:
 
-| Module   | File      | Responsibility                          |
-| -------- | --------- | --------------------------------------- |
-| **Page** | `page.ts` | Business logic, localStorage, pure functions |
-| **View** | `view.ts` | All DOM creation and manipulation       |
-| **Main** | `main.ts` | Owns state, wires handlers, calls render |
+| Module        | File       | Responsibility                                        |
+| ------------- | ---------- | ----------------------------------------------------- |
+| **TaskStore** | `store.ts` | Class that reads/writes tasks in localStorage          |
+| **Page**      | `page.ts`  | Class that owns the task array, delegates persistence to TaskStore |
+| **View**      | `view.ts`  | Class that owns the DOM — renders and wires events     |
+| **Main**      | `main.ts`  | Coordinator that creates all objects and defines handlers |
 
-Data flows in one direction: **user action → handler → update state → save → re-render**.
+Data flows in one direction: **user action → handler → mutate data (Page) → re-render (View)**.
 
 ### Types (`src/types.ts`)
 
@@ -31,29 +32,52 @@ Shared type definitions used by all modules:
 - `FilterStatus` — `"all" | "completed" | "pending"`
 - `TaskHandlers` — callback signatures that View uses to notify Main of user actions
 
+### TaskStore (`src/store.ts`)
+
+A small class that isolates all localStorage access:
+
+- `load()` — reads and parses tasks from localStorage (returns `[]` on missing/invalid data)
+- `save(tasks)` — serializes the task array to localStorage
+
+Main creates a `TaskStore` and injects it into `Page`. Because `Page` never touches `localStorage` directly, you could swap in a different store (e.g. an in-memory fake) for testing.
+
 ### Page (`src/page.ts`)
 
-Pure functions with no DOM access:
+A class that encapsulates the task array. It has no DOM or localStorage access:
 
-- `loadTasks()` / `saveTasks()` — localStorage read/write
-- `addTask()`, `deleteTask()`, `toggleTask()`, `editTask()` — return new arrays (immutable pattern)
-- `filterTasks()` — returns a subset based on filter status
+- **Constructor** — takes a `TaskStore` and loads the initial tasks from it
+- `addTask(title, description)` — creates a new task, prepends it, and saves via the store
+- `deleteTask(id)` — removes a task by id and saves
+- `toggleTask(id)` — flips a task's `completed` flag and saves
+- `editTask(id, title, description)` — updates a task's text and saves
+- `getFiltered(status)` — returns tasks matching the current filter
 
 ### View (`src/view.ts`)
 
-All DOM creation and event wiring:
+A class that owns the DOM elements. It never touches localStorage or task data directly:
 
-- `createAppShell()` — builds the form, filter bar, and task list container
-- `renderTaskList()` — clears and rebuilds the task list from current data
-- `updateFilterButtons()` — highlights the active filter
+- **Constructor** — receives the root element and handlers, builds the app shell (form, filter bar, task list), and wires form/filter events
+- `renderTaskList(tasks, handlers)` — clears and rebuilds the `<ul>` from the given task array, attaching checkbox/edit/delete listeners
+- `updateFilterButtons(activeFilter)` — highlights the active filter button
 
 ### Main (`src/main.ts`)
 
-The coordinator:
+The coordinator script — not a class, just top-level code that wires everything together:
 
-- Holds mutable state (`tasks` and `currentFilter`)
-- Creates handler functions that update state → save → render
+- Creates a `TaskStore`, injects it into a new `Page`, and creates a `View`
+- Holds `currentFilter` (the only piece of state that doesn't belong to either class)
+- Defines a `handlers` object whose callbacks call Page methods then re-render via View
 - Bootstraps the app on load
+
+### Why do handlers live in main.ts?
+
+`Page` knows nothing about the DOM and `View` knows nothing about localStorage. Each handler needs to coordinate both: mutate data (Page) then update the screen (View). That coordination doesn't belong inside either class — it's the job of a separate coordinator.
+
+Look at `onAdd` as an example: it calls `page.addTask()` then calls `render()`, which asks Page for filtered data and hands it to View. Neither class could do both steps on its own without knowing about the other.
+
+`onFilter` makes the pattern even clearer — it only updates `currentFilter` and re-renders. It never touches Page at all, which proves these handlers aren't data logic. They're glue code that sits between the two classes.
+
+This separation keeps each class independently testable: you can test Page without a DOM and View without localStorage.
 
 ## Your Task
 

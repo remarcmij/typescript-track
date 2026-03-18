@@ -8,11 +8,12 @@ function escapeHtml(str: string): string {
     .replaceAll('"', "&quot;");
 }
 
-export function createAppShell(
-  root: HTMLElement,
-  handlers: TaskHandlers,
-): void {
-  root.innerHTML = String.raw`
+export class View {
+  private taskList: HTMLUListElement;
+  private filterBar: HTMLDivElement;
+
+  constructor(root: HTMLElement, handlers: TaskHandlers) {
+    root.innerHTML = String.raw`
     <h1>To-Do List</h1>
     <form class="todo-form">
       <input type="text" id="title-input" placeholder="Task title" required>
@@ -26,40 +27,38 @@ export function createAppShell(
     </div>
     <ul class="task-list"></ul>`;
 
-  const form = root.querySelector<HTMLFormElement>(".todo-form")!;
-  const titleInput = root.querySelector<HTMLInputElement>("#title-input")!;
-  const descInput = root.querySelector<HTMLInputElement>("#desc-input")!;
+    const form = root.querySelector<HTMLFormElement>(".todo-form")!;
+    const titleInput = root.querySelector<HTMLInputElement>("#title-input")!;
+    const descInput = root.querySelector<HTMLInputElement>("#desc-input")!;
+    this.taskList = root.querySelector<HTMLUListElement>(".task-list")!;
+    this.filterBar = root.querySelector<HTMLDivElement>(".filter-bar")!;
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const title = titleInput.value.trim();
-    if (!title) return;
-    handlers.onAdd(title, descInput.value.trim());
-    form.reset();
-  });
-
-  for (const btn of root.querySelectorAll<HTMLButtonElement>(
-    ".filter-bar button",
-  )) {
-    btn.addEventListener("click", () => {
-      handlers.onFilter(btn.dataset.filter as FilterStatus);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      if (!title) return;
+      handlers.onAdd(title, descInput.value.trim());
+      form.reset();
     });
-  }
-}
 
-export function renderTaskList(
-  container: HTMLElement,
-  tasks: Task[],
-  handlers: TaskHandlers,
-): void {
-  if (tasks.length === 0) {
-    container.innerHTML = `<li class="empty-state">No tasks to show.</li>`;
-    return;
+    for (const btn of root.querySelectorAll<HTMLButtonElement>(
+      ".filter-bar button",
+    )) {
+      btn.addEventListener("click", () => {
+        handlers.onFilter(btn.dataset.filter as FilterStatus);
+      });
+    }
   }
 
-  container.innerHTML = tasks
-    .map(
-      (task) => String.raw`
+  renderTaskList(tasks: Task[], handlers: TaskHandlers): void {
+    if (tasks.length === 0) {
+      this.taskList.innerHTML = `<li class="empty-state">No tasks to show.</li>`;
+      return;
+    }
+
+    this.taskList.innerHTML = tasks
+      .map(
+        (task) => String.raw`
       <li class="task-item${task.completed ? " completed" : ""}" data-id="${task.id}">
         <input type="checkbox"${task.completed ? " checked" : ""}>
         <div class="task-content">
@@ -71,30 +70,37 @@ export function renderTaskList(
           <button class="delete-btn">Delete</button>
         </div>
       </li>`,
-    )
-    .join("");
+      )
+      .join("");
 
-  for (const li of container.querySelectorAll<HTMLLIElement>(".task-item")) {
-    const id = li.dataset.id!;
-    const task = tasks.find((t) => t.id === id)!;
+    for (const li of this.taskList.querySelectorAll<HTMLLIElement>(".task-item")) {
+      const id = li.dataset.id!;
+      const task = tasks.find((t) => t.id === id)!;
 
-    li.querySelector<HTMLInputElement>("input[type='checkbox']")!
-      .addEventListener("change", () => handlers.onToggle(id));
+      li.querySelector<HTMLInputElement>("input[type='checkbox']")!
+        .addEventListener("change", () => handlers.onToggle(id));
 
-    li.querySelector<HTMLButtonElement>(".edit-btn")!
-      .addEventListener("click", () => enterEditMode(li, task, handlers));
+      li.querySelector<HTMLButtonElement>(".edit-btn")!
+        .addEventListener("click", () => this.enterEditMode(li, task, handlers));
 
-    li.querySelector<HTMLButtonElement>(".delete-btn")!
-      .addEventListener("click", () => handlers.onDelete(id));
+      li.querySelector<HTMLButtonElement>(".delete-btn")!
+        .addEventListener("click", () => handlers.onDelete(id));
+    }
   }
-}
 
-function enterEditMode(
-  li: HTMLLIElement,
-  task: Task,
-  handlers: TaskHandlers,
-): void {
-  li.innerHTML = String.raw`
+  updateFilterButtons(activeFilter: FilterStatus): void {
+    const buttons = this.filterBar.querySelectorAll<HTMLButtonElement>("[data-filter]");
+    for (const btn of buttons) {
+      btn.classList.toggle("active", btn.dataset.filter === activeFilter);
+    }
+  }
+
+  private enterEditMode(
+    li: HTMLLIElement,
+    task: Task,
+    handlers: TaskHandlers,
+  ): void {
+    li.innerHTML = String.raw`
     <input type="checkbox"${task.completed ? " checked" : ""}>
     <div class="edit-form">
       <input type="text" class="edit-title" value="${escapeHtml(task.title)}">
@@ -105,40 +111,27 @@ function enterEditMode(
       </div>
     </div>`;
 
-  const checkbox = li.querySelector<HTMLInputElement>("input[type='checkbox']")!;
-  const titleInput = li.querySelector<HTMLInputElement>(".edit-title")!;
-  const descInput = li.querySelector<HTMLInputElement>(".edit-desc")!;
+    const checkbox = li.querySelector<HTMLInputElement>("input[type='checkbox']")!;
+    const titleInput = li.querySelector<HTMLInputElement>(".edit-title")!;
+    const descInput = li.querySelector<HTMLInputElement>(".edit-desc")!;
 
-  checkbox.addEventListener("change", () => handlers.onToggle(task.id));
+    checkbox.addEventListener("change", () => handlers.onToggle(task.id));
 
-  li.querySelector<HTMLButtonElement>(".save-btn")!
-    .addEventListener("click", () => {
-      const newTitle = titleInput.value.trim();
-      if (!newTitle) return;
-      handlers.onEdit(task.id, newTitle, descInput.value.trim());
-    });
+    li.querySelector<HTMLButtonElement>(".save-btn")!
+      .addEventListener("click", () => {
+        const newTitle = titleInput.value.trim();
+        if (!newTitle) return;
+        handlers.onEdit(task.id, newTitle, descInput.value.trim());
+      });
 
-  li.querySelector<HTMLButtonElement>(".cancel-btn")!
-    .addEventListener("click", () => {
-      const activeFilter =
-        (document.querySelector(".filter-bar .active") as HTMLElement)?.dataset
-          .filter as FilterStatus ?? "all";
-      handlers.onFilter(activeFilter);
-    });
+    li.querySelector<HTMLButtonElement>(".cancel-btn")!
+      .addEventListener("click", () => {
+        const activeFilter =
+          (document.querySelector(".filter-bar .active") as HTMLElement)?.dataset
+            .filter as FilterStatus ?? "all";
+        handlers.onFilter(activeFilter);
+      });
 
-  titleInput.focus();
-}
-
-export function updateFilterButtons(
-  container: HTMLElement,
-  activeFilter: FilterStatus,
-): void {
-  const buttons = container.querySelectorAll<HTMLButtonElement>("[data-filter]");
-  for (const btn of buttons) {
-    btn.classList.toggle("active", btn.dataset.filter === activeFilter);
+    titleInput.focus();
   }
-}
-
-export function clearForm(form: HTMLFormElement): void {
-  form.reset();
 }

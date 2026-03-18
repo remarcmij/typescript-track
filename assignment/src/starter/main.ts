@@ -1,59 +1,32 @@
-import type { Task, FilterStatus, TaskHandlers } from "../types.js";
-import {
-  loadTasks,
-  saveTasks,
-  addTask,
-  deleteTask,
-  toggleTask,
-  editTask,
-  filterTasks,
-} from "./page.js";
-import {
-  createAppShell,
-  renderTaskList,
-  updateFilterButtons,
-} from "./view.js";
+import { Page } from "./page.js";
+import { TaskStore } from "./store.js";
+import { View } from "./view.js";
+import type { FilterStatus, TaskHandlers } from "../types.js";
 
-// Application state
-let tasks: Task[] = loadTasks();
+const page = new Page(new TaskStore());
 let currentFilter: FilterStatus = "all";
+let view: View;
 
-/**
- * Re-render the visible task list and update the active filter button.
- */
 function render(): void {
-  const taskList = document.querySelector<HTMLUListElement>(".task-list");
-  const filterBar = document.querySelector<HTMLDivElement>(".filter-bar");
-  if (!taskList || !filterBar) return;
-
-  const visible = filterTasks(tasks, currentFilter);
-  renderTaskList(taskList, visible, handlers);
-  updateFilterButtons(filterBar, currentFilter);
+  view.renderTaskList(page.getFiltered(currentFilter), handlers);
+  view.updateFilterButtons(currentFilter);
 }
 
-/**
- * Handlers passed to the View so it can notify Main of user actions.
- * Each handler updates the state, persists to localStorage, and re-renders.
- */
 const handlers: TaskHandlers = {
   onAdd(title, description) {
-    tasks = addTask(tasks, title, description);
-    saveTasks(tasks);
+    page.addTask(title, description);
     render();
   },
   onToggle(id) {
-    tasks = toggleTask(tasks, id);
-    saveTasks(tasks);
+    page.toggleTask(id);
     render();
   },
   onDelete(id) {
-    tasks = deleteTask(tasks, id);
-    saveTasks(tasks);
+    page.deleteTask(id);
     render();
   },
   onEdit(id, title, description) {
-    tasks = editTask(tasks, id, title, description);
-    saveTasks(tasks);
+    page.editTask(id, title, description);
     render();
   },
   onFilter(status) {
@@ -62,9 +35,8 @@ const handlers: TaskHandlers = {
   },
 };
 
-// Bootstrap the application
 const app = document.getElementById("app");
 if (app) {
-  createAppShell(app, handlers);
+  view = new View(app, handlers);
   render();
 }

@@ -1,63 +1,55 @@
 import type { Task, FilterStatus } from "./types.js";
+import type { TaskStore } from "./store.js";
 
-const STORAGE_KEY = "todo-tasks";
+export class Page {
+  private tasks: Task[] = [];
 
-export function loadTasks(): Task[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as Task[];
-  } catch {
-    return [];
+  constructor(private readonly store: TaskStore) {
+    this.tasks = store.load();
   }
-}
 
-export function saveTasks(tasks: Task[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
+  private save(): void {
+    this.store.save(this.tasks);
+  }
 
-export function addTask(
-  tasks: Task[],
-  title: string,
-  description: string,
-): Task[] {
-  const newTask: Task = {
-    id: crypto.randomUUID(),
-    title,
-    description,
-    completed: false,
-  };
-  return [newTask, ...tasks];
-}
+  addTask(title: string, description: string): void {
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title,
+      description,
+      completed: false,
+    };
+    this.tasks = [newTask, ...this.tasks];
+    this.save();
+  }
 
-export function deleteTask(tasks: Task[], id: string): Task[] {
-  return tasks.filter((task) => task.id !== id);
-}
+  deleteTask(id: string): void {
+    this.tasks = this.tasks.filter((task) => task.id !== id);
+    this.save();
+  }
 
-export function toggleTask(tasks: Task[], id: string): Task[] {
-  return tasks.map((task) =>
-    task.id === id ? { ...task, completed: !task.completed } : task,
-  );
-}
+  toggleTask(id: string): void {
+    this.tasks = this.tasks.map((task) =>
+      task.id === id ? { ...task, completed: !task.completed } : task,
+    );
+    this.save();
+  }
 
-export function editTask(
-  tasks: Task[],
-  id: string,
-  title: string,
-  description: string,
-): Task[] {
-  return tasks.map((task) =>
-    task.id === id ? { ...task, title, description } : task,
-  );
-}
+  editTask(id: string, title: string, description: string): void {
+    this.tasks = this.tasks.map((task) =>
+      task.id === id ? { ...task, title, description } : task,
+    );
+    this.save();
+  }
 
-export function filterTasks(tasks: Task[], status: FilterStatus): Task[] {
-  switch (status) {
-    case "all":
-      return tasks;
-    case "completed":
-      return tasks.filter((task) => task.completed);
-    case "pending":
-      return tasks.filter((task) => !task.completed);
+  getFiltered(status: FilterStatus): Task[] {
+    switch (status) {
+      case "all":
+        return this.tasks;
+      case "completed":
+        return this.tasks.filter((task) => task.completed);
+      case "pending":
+        return this.tasks.filter((task) => !task.completed);
+    }
   }
 }
