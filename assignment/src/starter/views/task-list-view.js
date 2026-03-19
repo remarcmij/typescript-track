@@ -1,15 +1,13 @@
-import type { Task, TaskHandlers } from "../types.js";
 import { escapeHtml } from "./utils.js";
 import { enterEditMode } from "./task-edit-view.js";
 
 export class TaskListView {
-  constructor(
-    private readonly root: HTMLUListElement,
-    private readonly handlers: TaskHandlers,
-  ) {}
+  constructor(root, handlers) {
+    this.root = root;
+    this.handlers = handlers;
+  }
 
-  // TODO: Replace `any[]` with `Task[]`
-  render(tasks: any[]): void {
+  render(tasks) {
     if (tasks.length === 0) {
       this.root.innerHTML = `<li class="empty-state">No tasks to show.</li>`;
       return;
@@ -32,19 +30,19 @@ export class TaskListView {
       )
       .join("");
 
-    for (const li of this.root.querySelectorAll<HTMLLIElement>(".task-item")) {
-      const id = li.dataset.id!;
-      const task = tasks.find((t) => t.id === id)!;
+    for (const li of this.root.querySelectorAll(".task-item")) {
+      const id = li.dataset.id;
+      const task = tasks.find((t) => t.id === id);
 
-      li.querySelector<HTMLInputElement>("input[type='checkbox']")!
+      li.querySelector("input[type='checkbox']")
         .addEventListener("change", () => this.handlers.onToggle(id));
 
-      li.querySelector<HTMLButtonElement>(".edit-btn")!
+      li.querySelector(".edit-btn")
         .addEventListener("click", () => {
           enterEditMode(li, task, this.handlers);
         });
 
-      li.querySelector<HTMLButtonElement>(".delete-btn")!
+      li.querySelector(".delete-btn")
         .addEventListener("click", () => this.handlers.onDelete(id));
     }
   }

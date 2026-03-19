@@ -1,12 +1,6 @@
-import type { Task, TaskHandlers, FilterStatus } from "../types.js";
 import { escapeHtml } from "./utils.js";
 
-// TODO: Replace `any` with `Task`
-export function enterEditMode(
-  li: HTMLLIElement,
-  task: any,
-  handlers: TaskHandlers,
-): void {
+export function enterEditMode(li, task, handlers) {
   li.innerHTML = String.raw`
     <input type="checkbox"${task.completed ? " checked" : ""}>
     <div class="edit-form">
@@ -18,24 +12,23 @@ export function enterEditMode(
       </div>
     </div>`;
 
-  const checkbox = li.querySelector<HTMLInputElement>("input[type='checkbox']")!;
-  const titleInput = li.querySelector<HTMLInputElement>(".edit-title")!;
-  const descInput = li.querySelector<HTMLInputElement>(".edit-desc")!;
+  const checkbox = li.querySelector("input[type='checkbox']");
+  const titleInput = li.querySelector(".edit-title");
+  const descInput = li.querySelector(".edit-desc");
 
   checkbox.addEventListener("change", () => handlers.onToggle(task.id));
 
-  li.querySelector<HTMLButtonElement>(".save-btn")!
+  li.querySelector(".save-btn")
     .addEventListener("click", () => {
       const newTitle = titleInput.value.trim();
       if (!newTitle) return;
       handlers.onEdit(task.id, newTitle, descInput.value.trim());
     });
 
-  li.querySelector<HTMLButtonElement>(".cancel-btn")!
+  li.querySelector(".cancel-btn")
     .addEventListener("click", () => {
       const activeFilter =
-        (document.querySelector(".filter-bar .active") as HTMLElement)?.dataset
-          .filter as FilterStatus ?? "all";
+        document.querySelector(".filter-bar .active")?.dataset.filter ?? "all";
       handlers.onFilter(activeFilter);
     });
 

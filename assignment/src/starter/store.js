@@ -1,19 +1,17 @@
-import type { Task } from "./types.js";
-
 export class TaskStore {
-  private readonly STORAGE_KEY = "todo-tasks";
+  STORAGE_KEY = "todo-tasks";
 
-  load(): Task[] {
+  load() {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (!raw) return [];
-      return JSON.parse(raw) as Task[];
+      return JSON.parse(raw);
     } catch {
       return [];
     }
   }
 
-  save(tasks: Task[]): void {
+  save(tasks) {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(tasks));
   }
 }

@@ -1,11 +1,7 @@
-import type { TaskHandlers, FilterStatus, Task } from "../types.js";
 import { TaskListView } from "./task-list-view.js";
 
 export class AppView {
-  private filterBar: HTMLDivElement;
-  private taskListView: TaskListView;
-
-  constructor(root: HTMLElement, handlers: TaskHandlers) {
+  constructor(root, handlers) {
     root.innerHTML = String.raw`
     <h1>To-Do List</h1>
     <form class="todo-form">
@@ -20,11 +16,11 @@ export class AppView {
     </div>
     <ul class="task-list"></ul>`;
 
-    const form = root.querySelector<HTMLFormElement>(".todo-form")!;
-    const titleInput = root.querySelector<HTMLInputElement>("#title-input")!;
-    const descInput = root.querySelector<HTMLInputElement>("#desc-input")!;
-    const taskListEl = root.querySelector<HTMLUListElement>(".task-list")!;
-    this.filterBar = root.querySelector<HTMLDivElement>(".filter-bar")!;
+    const form = root.querySelector(".todo-form");
+    const titleInput = root.querySelector("#title-input");
+    const descInput = root.querySelector("#desc-input");
+    const taskListEl = root.querySelector(".task-list");
+    this.filterBar = root.querySelector(".filter-bar");
 
     this.taskListView = new TaskListView(taskListEl, handlers);
 
@@ -36,23 +32,20 @@ export class AppView {
       form.reset();
     });
 
-    for (const btn of root.querySelectorAll<HTMLButtonElement>(
-      ".filter-bar button",
-    )) {
+    for (const btn of root.querySelectorAll(".filter-bar button")) {
       btn.addEventListener("click", () => {
-        handlers.onFilter(btn.dataset.filter as FilterStatus);
+        handlers.onFilter(btn.dataset.filter);
       });
     }
   }
 
-  // TODO: Replace `any[]` with `Task[]`
-  render(tasks: any[], activeFilter: FilterStatus): void {
+  render(tasks, activeFilter) {
     this.taskListView.render(tasks);
     this.updateFilterButtons(activeFilter);
   }
 
-  private updateFilterButtons(activeFilter: FilterStatus): void {
-    const buttons = this.filterBar.querySelectorAll<HTMLButtonElement>("[data-filter]");
+  updateFilterButtons(activeFilter) {
+    const buttons = this.filterBar.querySelectorAll("[data-filter]");
     for (const btn of buttons) {
       btn.classList.toggle("active", btn.dataset.filter === activeFilter);
     }

@@ -1,17 +1,16 @@
 import { TaskManager } from "./task-manager.js";
 import { TaskStore } from "./store.js";
 import { AppView } from "./views/app-view.js";
-import type { FilterStatus, TaskHandlers } from "./types.js";
 
 const taskManager = new TaskManager(new TaskStore());
-let currentFilter: FilterStatus = "all";
-let appView: AppView;
+let currentFilter = "all";
+let appView;
 
-function render(): void {
+function render() {
   appView.render(taskManager.getFiltered(currentFilter), currentFilter);
 }
 
-const handlers: TaskHandlers = {
+const handlers = {
   onAdd(title, description) {
     taskManager.addTask(title, description);
     render();
