@@ -11,22 +11,12 @@ npm run dev
 
 Open the URL shown in the terminal (usually `http://localhost:5173`).
 
-To work on the starter version, change the script source in `index.html`:
-
-```html
-<!-- Change this: -->
-<script type="module" src="/src/main.ts"></script>
-
-<!-- To this: -->
-<script type="module" src="/src/starter/main.js"></script>
-```
-
 Run the app in the browser and try it out — add, toggle, edit, delete, and filter tasks. Everything works. Now your goal is to make it type-safe.
 
 ## Architecture
 
 ```
-src/starter/
+src/
   main.js                   — coordinator that creates all objects and defines handlers
   store.js                  — reads/writes tasks in localStorage
   task-manager.js           — owns the task array, delegates persistence to TaskStore
@@ -41,21 +31,21 @@ Data flows in one direction: **user action → handler → mutate data (TaskMana
 
 ## Your Task
 
-Convert the JavaScript app in `src/starter/` to TypeScript. Work through the steps below in order.
+Convert the JavaScript app in `src/` to TypeScript. Work through the steps below in order.
 
 ### Step 1 — Rename `.js` files to `.ts`
 
-Rename every `.js` file in `src/starter/` (and `src/starter/views/`) to `.ts`. Update the script source in `index.html` accordingly:
+Rename every `.js` file in `src/` (and `src/views/`) to `.ts`. Update the script source in `index.html` accordingly:
 
 ```html
-<script type="module" src="/src/starter/main.ts"></script>
+<script type="module" src="/src/main.ts"></script>
 ```
 
 After renaming, the app will still run in the browser (Vite handles `.ts` files), but `npx tsc --noEmit` will report errors. The rest of the steps fix those errors.
 
 ### Step 2 — Create a `types.ts` file
 
-Create `src/starter/types.ts` with the shared type definitions the app needs:
+Create `src/types.ts` with the shared type definitions the app needs:
 
 1. A `Task` interface — read the other files to discover what properties a task has (look at `task-list-view.ts` and `task-manager.ts` for clues).
 2. A `FilterStatus` type — the filter buttons in `app-view.ts` have `data-filter` attributes with the valid values.
@@ -93,8 +83,6 @@ npx tsc --noEmit
 ```
 
 It should pass with zero errors. Then test the app in the browser — everything should still work exactly as before.
-
-If you get stuck, the reference implementation in `src/` (outside `starter/`) contains the complete TypeScript solution.
 
 ## Features
 
