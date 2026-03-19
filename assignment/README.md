@@ -43,6 +43,9 @@ Rename every `.js` file in `src/` (and `src/views/`) to `.ts`. Update the script
 
 After renaming, the app will still run in the browser (Vite handles `.ts` files), but `npx tsc --noEmit` will report errors. The rest of the steps fix those errors.
 
+> [!TIP]
+> Keep the `.js` extensions in import paths (e.g., `import { TaskStore } from "./store.js"`). TypeScript resolves `.js` imports to the corresponding `.ts` files automatically. Do **not** change them to `.ts`.
+
 ### Step 2 — Create a `types.ts` file
 
 Create `src/types.ts` with the shared type definitions the app needs:
@@ -56,9 +59,8 @@ Create `src/types.ts` with the shared type definitions the app needs:
 Go through each file and add TypeScript annotations:
 
 - **Function parameters and return types** — every function and method should have typed parameters. Add return types where they aren't obvious.
-- **Class properties** — declare typed properties for fields like `tasks`, `store`, `root`, `handlers`, etc. Mark properties that shouldn't change as `readonly`, and properties that shouldn't be accessed from outside as `private`.
-- **Constructor shorthand** — where a constructor just assigns a parameter to `this`, you can use TypeScript's parameter property shorthand: `constructor(private readonly store: TaskStore)`.
-- **Import your types** — add `import type { ... }` statements to pull in `Task`, `FilterStatus`, and `TaskHandlers` where needed.
+- **Class properties** — declare typed properties at the top of each class for fields like `tasks`, `store`, `root`, `handlers`, etc. TypeScript needs to know the type of every property before it's used.
+- **Import your types** — add `import { ... }` statements to pull in `Task`, `FilterStatus`, and `TaskHandlers` where needed.
 
 ### Step 4 — Type the DOM queries
 
@@ -69,10 +71,10 @@ The `querySelector` calls currently return `Element | null`. TypeScript doesn't 
 
 ### Step 5 — Handle type casts
 
-A couple of places need explicit type assertions:
+Two places need an explicit type assertion because `dataset` values are `string | undefined`, but you know they match `FilterStatus`:
 
-- `btn.dataset.filter` returns `string | undefined`, but you know it's a valid `FilterStatus` — use `as FilterStatus`.
-- Similar patterns appear in the edit view's cancel button handler.
+1. **`app-view.ts`** — the filter button click handler: cast `btn.dataset.filter as FilterStatus`.
+2. **`task-edit-view.ts`** — the cancel button handler reads the active filter button's `dataset.filter` to restore the current view. Cast it to `FilterStatus` the same way.
 
 ## Checking Your Work
 

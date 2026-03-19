@@ -1,9 +1,9 @@
-import type { TaskHandlers, FilterStatus, Task } from "../types.js";
+import { TaskHandlers, FilterStatus, Task } from "../types.js";
 import { TaskListView } from "./task-list-view.js";
 
 export class AppView {
-  private filterBar: HTMLDivElement;
-  private taskListView: TaskListView;
+  filterBar: HTMLDivElement;
+  taskListView: TaskListView;
 
   constructor(root: HTMLElement, handlers: TaskHandlers) {
     root.innerHTML = String.raw`
@@ -50,7 +50,7 @@ export class AppView {
     this.updateFilterButtons(activeFilter);
   }
 
-  private updateFilterButtons(activeFilter: FilterStatus): void {
+  updateFilterButtons(activeFilter: FilterStatus): void {
     const buttons = this.filterBar.querySelectorAll<HTMLButtonElement>("[data-filter]");
     for (const btn of buttons) {
       btn.classList.toggle("active", btn.dataset.filter === activeFilter);

@@ -1,7 +1,7 @@
-import type { Task } from "./types.js";
+import { Task } from "./types.js";
 
 export class TaskStore {
-  private readonly STORAGE_KEY = "todo-tasks";
+  STORAGE_KEY: string = "todo-tasks";
 
   load(): Task[] {
     try {

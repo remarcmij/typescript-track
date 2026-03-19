@@ -1,14 +1,16 @@
-import type { Task, FilterStatus } from "./types.js";
-import type { TaskStore } from "./store.js";
+import { Task, FilterStatus } from "./types.js";
+import { TaskStore } from "./store.js";
 
 export class TaskManager {
-  private tasks: Task[] = [];
+  tasks: Task[] = [];
+  store: TaskStore;
 
-  constructor(private readonly store: TaskStore) {
+  constructor(store: TaskStore) {
+    this.store = store;
     this.tasks = store.load();
   }
 
-  private save(): void {
+  save(): void {
     this.store.save(this.tasks);
   }
 

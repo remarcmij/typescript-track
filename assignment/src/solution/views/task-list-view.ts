@@ -1,12 +1,15 @@
-import type { Task, TaskHandlers } from "../types.js";
+import { Task, TaskHandlers } from "../types.js";
 import { escapeHtml } from "./utils.js";
 import { enterEditMode } from "./task-edit-view.js";
 
 export class TaskListView {
-  constructor(
-    private readonly root: HTMLUListElement,
-    private readonly handlers: TaskHandlers,
-  ) {}
+  root: HTMLUListElement;
+  handlers: TaskHandlers;
+
+  constructor(root: HTMLUListElement, handlers: TaskHandlers) {
+    this.root = root;
+    this.handlers = handlers;
+  }
 
   render(tasks: Task[]): void {
     if (tasks.length === 0) {

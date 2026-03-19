@@ -1,4 +1,4 @@
-import type { Task, TaskHandlers, FilterStatus } from "../types.js";
+import { Task, TaskHandlers, FilterStatus } from "../types.js";
 import { escapeHtml } from "./utils.js";
 
 export function enterEditMode(
@@ -32,9 +32,8 @@ export function enterEditMode(
 
   li.querySelector<HTMLButtonElement>(".cancel-btn")!
     .addEventListener("click", () => {
-      const activeFilter =
-        (document.querySelector(".filter-bar .active") as HTMLElement)?.dataset
-          .filter as FilterStatus ?? "all";
+      const btn = document.querySelector<HTMLButtonElement>(".filter-bar .active");
+      const activeFilter = (btn?.dataset.filter as FilterStatus) ?? "all";
       handlers.onFilter(activeFilter);
     });
 

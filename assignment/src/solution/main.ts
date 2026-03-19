@@ -1,7 +1,7 @@
 import { TaskManager } from "./task-manager.js";
 import { TaskStore } from "./store.js";
 import { AppView } from "./views/app-view.js";
-import type { FilterStatus, TaskHandlers } from "./types.js";
+import { FilterStatus, TaskHandlers } from "./types.js";
 
 const taskManager = new TaskManager(new TaskStore());
 let currentFilter: FilterStatus = "all";
