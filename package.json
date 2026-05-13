@@ -1,0 +1,27 @@
+{
+  "name": "typescript-track",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remarcmij/typescript-track.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/remarcmij/typescript-track/issues"
+  },
+  "homepage": "https://github.com/remarcmij/typescript-track#readme",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
